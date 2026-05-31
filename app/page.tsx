@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Send, Plus, MessageSquare, Trash2, Copy, Check, Menu, X } from "lucide-react";
+import Logo from "@/components/Logo";
 
 interface Message {
   role: "user" | "assistant";
@@ -190,12 +191,7 @@ export default function Home() {
         <div style={{ padding: "14px 12px 10px", flexShrink: 0 }}>
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "4px 4px 14px", borderBottom: "1px solid #1f1f1f", marginBottom: 10 }}>
-            <div style={{
-              width: 30, height: 30, borderRadius: 8,
-              background: "linear-gradient(135deg,#6c63ff,#38bdf8)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 800, fontSize: 11, color: "#fff",
-            }}>BM</div>
+            <Logo size={30} />
             <span style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>BasedMind</span>
           </div>
 
@@ -307,13 +303,9 @@ export default function Home() {
 
             {messages.length === 0 && (
               <div style={{ paddingTop: 80, textAlign: "center" }}>
-                <div style={{
-                  width: 64, height: 64, borderRadius: 18, margin: "0 auto 20px",
-                  background: "linear-gradient(135deg,#6c63ff,#38bdf8)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 22, fontWeight: 800, color: "#fff",
-                  boxShadow: "0 0 40px #6c63ff25",
-                }}>BM</div>
+                <div style={{ margin: "0 auto 20px", width: 64, filter: "drop-shadow(0 0 20px #6c63ff50)" }}>
+                  <Logo size={64} />
+                </div>
                 <h2 style={{ fontSize: 26, fontWeight: 700, color: "#fff", marginBottom: 8 }}>How can I help you today?</h2>
                 <p style={{ fontSize: 14, color: "#444", marginBottom: 40 }}>BasedMind — the AI powering the $BMIND ecosystem on Base</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, maxWidth: 540, margin: "0 auto" }}>
@@ -350,12 +342,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                    <div style={{
-                      width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                      background: "linear-gradient(135deg,#6c63ff,#38bdf8)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 11, fontWeight: 800, color: "#fff", marginTop: 2,
-                    }}>BM</div>
+                    <div style={{ flexShrink: 0, marginTop: 2 }}><Logo size={32} /></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="md-body">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
