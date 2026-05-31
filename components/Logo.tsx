@@ -9,16 +9,16 @@ export default function Logo({ size = 36 }: { size?: number }) {
     >
       <defs>
         <linearGradient id="lg-head" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#7c3aed" />
-          <stop offset="100%" stopColor="#4f46e5" />
+          <stop offset="0%" stopColor="#1d6fd8" />
+          <stop offset="100%" stopColor="#0369a1" />
         </linearGradient>
         <linearGradient id="lg-brain" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#ddd6fe" />
-          <stop offset="100%" stopColor="#c4b5fd" />
+          <stop offset="0%" stopColor="#bfdbfe" />
+          <stop offset="100%" stopColor="#93c5fd" />
         </linearGradient>
         <radialGradient id="lg-node1" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#a78bfa" />
-          <stop offset="100%" stopColor="#7c3aed" />
+          <stop offset="0%" stopColor="#60a5fa" />
+          <stop offset="100%" stopColor="#1d6fd8" />
         </radialGradient>
         <radialGradient id="lg-node2" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#67e8f9" />
@@ -46,25 +46,25 @@ export default function Logo({ size = 36 }: { size?: number }) {
         {/* Right lobe */}
         <ellipse cx="62" cy="46" rx="13" ry="10" fill="url(#lg-brain)" />
         {/* Brain fold lines */}
-        <path d="M 33,40 C 36,35 41,35 42,39" stroke="#7c3aed" strokeWidth="1.3" strokeOpacity="0.5" fill="none" strokeLinecap="round" />
-        <path d="M 44,37 C 47,33 51,34 51,38" stroke="#7c3aed" strokeWidth="1.3" strokeOpacity="0.5" fill="none" strokeLinecap="round" />
-        <path d="M 33,48 C 36,53 42,53 43,48" stroke="#7c3aed" strokeWidth="1.3" strokeOpacity="0.5" fill="none" strokeLinecap="round" />
-        <path d="M 55,47 C 58,52 64,51 65,47" stroke="#7c3aed" strokeWidth="1.3" strokeOpacity="0.5" fill="none" strokeLinecap="round" />
-        <path d="M 57,38 C 60,33 64,34 65,38" stroke="#7c3aed" strokeWidth="1.3" strokeOpacity="0.5" fill="none" strokeLinecap="round" />
+        <path d="M 33,40 C 36,35 41,35 42,39" stroke="#1d6fd8" strokeWidth="1.3" strokeOpacity="0.5" fill="none" strokeLinecap="round" />
+        <path d="M 44,37 C 47,33 51,34 51,38" stroke="#1d6fd8" strokeWidth="1.3" strokeOpacity="0.5" fill="none" strokeLinecap="round" />
+        <path d="M 33,48 C 36,53 42,53 43,48" stroke="#1d6fd8" strokeWidth="1.3" strokeOpacity="0.5" fill="none" strokeLinecap="round" />
+        <path d="M 55,47 C 58,52 64,51 65,47" stroke="#1d6fd8" strokeWidth="1.3" strokeOpacity="0.5" fill="none" strokeLinecap="round" />
+        <path d="M 57,38 C 60,33 64,34 65,38" stroke="#1d6fd8" strokeWidth="1.3" strokeOpacity="0.5" fill="none" strokeLinecap="round" />
         {/* Center divide */}
-        <line x1="52" y1="34" x2="52" y2="56" stroke="#7c3aed" strokeWidth="1" strokeOpacity="0.35" />
+        <line x1="52" y1="34" x2="52" y2="56" stroke="#1d6fd8" strokeWidth="1" strokeOpacity="0.35" />
       </g>
 
       {/* ── Lines connecting head → nodes ── */}
       {/* Head to main node */}
-      <line x1="74" y1="30" x2="94" y2="18" stroke="#a78bfa" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="74" y1="30" x2="94" y2="18" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" />
       {/* Main node to right node */}
       <line x1="106" y1="18" x2="122" y2="35" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" />
       {/* Main node to top node */}
       <line x1="106" y1="18" x2="115" y2="4" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" />
 
       {/* ── Node 1 — large, purple (closest to head) ── */}
-      <circle cx="100" cy="18" r="16" fill="#7c3aed" fillOpacity="0.15" />
+      <circle cx="100" cy="18" r="16" fill="#1d6fd8" fillOpacity="0.15" />
       <circle cx="100" cy="18" r="12" fill="url(#lg-node1)" />
       <circle cx="97" cy="15" r="3" fill="white" fillOpacity="0.35" />
 
