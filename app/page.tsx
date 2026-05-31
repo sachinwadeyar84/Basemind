@@ -310,87 +310,87 @@ export default function Home() {
       {/* MAIN AREA */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-        {/* Top bar */}
+        {/* Top bar — ChatGPT style */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "12px 20px", borderBottom: "1px solid #1a1a1a",
+          padding: isMobile ? "10px 16px" : "10px 20px",
+          borderBottom: "1px solid #1a1a1a", minHeight: 52,
         }}>
-          <button
-            onClick={() => setSidebarOpen(o => !o)}
-            style={{ background: "none", border: "none", color: "#555", cursor: "pointer", padding: 4, borderRadius: 6 }}
-          >
-            {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+          <button onClick={() => setSidebarOpen(o => !o)}
+            style={{ background: "none", border: "none", color: "#666", cursor: "pointer", padding: 6, borderRadius: 8, display: "flex" }}>
+            <Menu size={20} />
           </button>
-          <div style={{
-            fontSize: 11, padding: "4px 10px", borderRadius: 20,
-            background: "#111", border: "1px solid #1f1f1f", color: "#6c63ff",
-            display: "flex", alignItems: "center", gap: 5,
-          }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} />
-            Live on Base
+
+          {/* Center: logo + name */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Logo size={24} />
+            <span style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>BasedMind</span>
           </div>
+
+          {/* Right: new chat icon on mobile */}
+          <button onClick={newChat}
+            style={{ background: "none", border: "none", color: "#666", cursor: "pointer", padding: 6, borderRadius: 8, display: "flex" }}>
+            <Plus size={20} />
+          </button>
         </div>
 
         {/* Messages */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 0 16px" }}>
-          <div style={{ maxWidth: 760, margin: "0 auto", padding: "0 20px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "0 0 8px" }}>
+          <div style={{ maxWidth: 720, margin: "0 auto", padding: isMobile ? "0 14px" : "0 24px" }}>
 
             {messages.length === 0 && (
-              <div style={{ paddingTop: 80, textAlign: "center" }}>
-                <div style={{ margin: "0 auto 20px", width: 64, filter: "drop-shadow(0 0 20px #6c63ff50)" }}>
-                  <Logo size={64} />
+              <div style={{ paddingTop: isMobile ? 50 : 80, textAlign: "center", paddingBottom: 20 }}>
+                <div style={{ margin: "0 auto 16px", width: isMobile ? 56 : 64, filter: "drop-shadow(0 0 18px #6c63ff50)" }}>
+                  <Logo size={isMobile ? 56 : 64} />
                 </div>
-                <h2 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, color: "#fff", marginBottom: 8 }}>How can I help you today?</h2>
-                <p style={{ fontSize: 14, color: "#444", marginBottom: 40 }}>BasedMind — the AI powering the $BMIND ecosystem on Base</p>
-                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, maxWidth: 540, margin: "0 auto" }}>
+                <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
+                  How can I help you today?
+                </h2>
+                <p style={{ fontSize: 13, color: "#444", marginBottom: 32 }}>
+                  AI for the $BMIND ecosystem on Base
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr", gap: 8, maxWidth: 480, margin: "0 auto" }}>
                   {SUGGESTIONS.map(s => (
-                    <button
-                      key={s}
-                      onClick={() => sendMessage(s)}
-                      style={{
-                        textAlign: "left", padding: "14px 16px", borderRadius: 12,
-                        background: "#141414", border: "1px solid #222",
-                        color: "#888", fontSize: 13, cursor: "pointer", transition: "all 0.15s",
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = "#6c63ff50"; e.currentTarget.style.color = "#fff"; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = "#222"; e.currentTarget.style.color = "#888"; }}
-                    >{s}</button>
+                    <button key={s} onClick={() => sendMessage(s)} style={{
+                      textAlign: "left", padding: "12px 14px", borderRadius: 14,
+                      background: "#161616", border: "1px solid #222",
+                      color: "#777", fontSize: isMobile ? 12 : 13, cursor: "pointer",
+                      lineHeight: 1.4,
+                    }}>{s}</button>
                   ))}
                 </div>
               </div>
             )}
 
             {messages.map((msg, i) => (
-              <div key={i} className="msg-enter" style={{
-                padding: "24px 0",
-                borderBottom: i < messages.length - 1 ? "1px solid #161616" : "none",
-              }}>
+              <div key={i} className="msg-enter" style={{ padding: isMobile ? "16px 0" : "20px 0" }}>
                 {msg.role === "user" ? (
+                  /* User message — bubble right */
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <div style={{
-                      maxWidth: "75%", background: "#1e1e2e",
-                      border: "1px solid #2a2a3a", borderRadius: "18px 18px 4px 18px",
-                      padding: "12px 16px", fontSize: 14, color: "#e2e8f0",
-                      lineHeight: 1.7, whiteSpace: "pre-wrap",
+                      maxWidth: isMobile ? "88%" : "75%",
+                      background: "#2a2a3a",
+                      borderRadius: "18px 18px 4px 18px",
+                      padding: isMobile ? "10px 14px" : "12px 16px",
+                      fontSize: isMobile ? 14 : 14,
+                      color: "#e2e8f0", lineHeight: 1.65, whiteSpace: "pre-wrap",
                     }}>{msg.content}</div>
                   </div>
                 ) : (
-                  <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                    <div style={{ flexShrink: 0, marginTop: 2 }}><Logo size={32} /></div>
+                  /* AI message — full width, small logo left */
+                  <div style={{ display: "flex", gap: isMobile ? 10 : 14, alignItems: "flex-start" }}>
+                    <div style={{ flexShrink: 0, marginTop: 3 }}><Logo size={isMobile ? 26 : 30} /></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="md-body">
+                      <div className="md-body" style={{ fontSize: isMobile ? 14 : 14.5 }}>
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                       </div>
                       {msg.content && (
-                        <button
-                          onClick={() => copyMessage(msg.content, i)}
-                          style={{
-                            marginTop: 10, display: "flex", alignItems: "center", gap: 5,
-                            fontSize: 11, color: copied === i ? "#22c55e" : "#444",
-                            background: "none", border: "none", cursor: "pointer", padding: 0,
-                          }}
-                        >
-                          {copied === i ? <Check size={12} /> : <Copy size={12} />}
+                        <button onClick={() => copyMessage(msg.content, i)} style={{
+                          marginTop: 8, display: "flex", alignItems: "center", gap: 4,
+                          fontSize: 11, color: copied === i ? "#22c55e" : "#3a3a4a",
+                          background: "none", border: "none", cursor: "pointer", padding: 0,
+                        }}>
+                          {copied === i ? <Check size={11} /> : <Copy size={11} />}
                           {copied === i ? "Copied" : "Copy"}
                         </button>
                       )}
@@ -401,19 +401,11 @@ export default function Home() {
             ))}
 
             {loading && (messages.length === 0 || messages[messages.length - 1].role === "user") && (
-              <div className="msg-enter" style={{ padding: "24px 0", display: "flex", gap: 14, alignItems: "flex-start" }}>
-                <div style={{
-                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                  background: "linear-gradient(135deg,#6c63ff,#38bdf8)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 800, color: "#fff",
-                }}>BM</div>
-                <div style={{ display: "flex", gap: 5, paddingTop: 10 }}>
+              <div className="msg-enter" style={{ padding: "16px 0", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ flexShrink: 0, marginTop: 3 }}><Logo size={26} /></div>
+                <div style={{ display: "flex", gap: 5, paddingTop: 8 }}>
                   {[0,1,2].map(i => (
-                    <div key={i} className="dot" style={{
-                      width: 7, height: 7, borderRadius: "50%", background: "#6c63ff",
-                      animationDelay: `${i * 0.2}s`,
-                    }} />
+                    <div key={i} className="dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#6c63ff", animationDelay: `${i*0.2}s` }} />
                   ))}
                 </div>
               </div>
@@ -423,13 +415,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Input */}
-        <div style={{ padding: "10px 20px 18px" }}>
-          <div style={{ maxWidth: 760, margin: "0 auto" }}>
+        {/* Input — ChatGPT style */}
+        <div style={{ padding: isMobile ? "8px 12px 16px" : "10px 20px 18px", background: "#0d0d0d" }}>
+          <div style={{ maxWidth: 720, margin: "0 auto" }}>
             <div style={{
-              display: "flex", alignItems: "flex-end", gap: 10,
-              background: "#141414", border: "1px solid #252525",
-              borderRadius: 16, padding: "12px 14px",
+              display: "flex", alignItems: "flex-end", gap: 8,
+              background: "#161616", border: "1px solid #2a2a2a",
+              borderRadius: 20, padding: "10px 12px 10px 16px",
             }}>
               <textarea
                 ref={inputRef}
@@ -439,21 +431,21 @@ export default function Home() {
                 onChange={e => {
                   setInput(e.target.value);
                   e.target.style.height = "auto";
-                  e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
+                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
                 }}
                 onKeyDown={handleKeyDown}
                 style={{
                   flex: 1, background: "none", border: "none", outline: "none",
-                  color: "#e2e8f0", fontSize: 14, lineHeight: 1.6, resize: "none",
-                  maxHeight: 140, fontFamily: "inherit",
+                  color: "#e2e8f0", fontSize: 15, lineHeight: 1.5, resize: "none",
+                  maxHeight: 120, fontFamily: "inherit", paddingTop: 2,
                 }}
               />
               <button
                 onClick={() => sendMessage()}
                 disabled={!input.trim() || loading}
                 style={{
-                  width: 36, height: 36, borderRadius: 10, border: "none",
-                  background: input.trim() && !loading ? "linear-gradient(135deg,#6c63ff,#38bdf8)" : "#1f1f1f",
+                  width: 34, height: 34, borderRadius: "50%", border: "none",
+                  background: input.trim() && !loading ? "linear-gradient(135deg,#6c63ff,#38bdf8)" : "#222",
                   color: input.trim() && !loading ? "#fff" : "#444",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   cursor: input.trim() && !loading ? "pointer" : "not-allowed",
@@ -461,9 +453,11 @@ export default function Home() {
                 }}
               ><Send size={15} /></button>
             </div>
-            <p style={{ textAlign: "center", fontSize: 11, color: "#2a2a2a", marginTop: 8 }}>
-              BasedMind can make mistakes. Powered by $BMIND on Base.
-            </p>
+            {!isMobile && (
+              <p style={{ textAlign: "center", fontSize: 11, color: "#2a2a2a", marginTop: 6 }}>
+                BasedMind can make mistakes. Powered by $BMIND on Base.
+              </p>
+            )}
           </div>
         </div>
       </div>
