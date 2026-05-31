@@ -35,9 +35,22 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<number | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Detect mobile and set sidebar default
+  useEffect(() => {
+    const check = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setSidebarOpen(!mobile);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -69,6 +82,7 @@ export default function Home() {
     setConversations(prev => [convo, ...prev]);
     setActiveId(id);
     setInput("");
+    if (isMobile) setSidebarOpen(false);
   }
 
   function deleteConvo(id: string, e: React.MouseEvent) {
@@ -177,16 +191,36 @@ export default function Home() {
   return (
     <div style={{ display: "flex", height: "100vh", background: "#0d0d0d", overflow: "hidden" }}>
 
+      {/* Mobile backdrop */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+            zIndex: 40, backdropFilter: "blur(2px)",
+          }}
+        />
+      )}
+
       {/* SIDEBAR */}
       <div style={{
-        width: sidebarOpen ? 260 : 0,
-        minWidth: sidebarOpen ? 260 : 0,
+        width: 260,
+        minWidth: 260,
         background: "#111",
         borderRight: "1px solid #1f1f1f",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        transition: "width 0.25s ease, min-width 0.25s ease",
+        transition: "transform 0.25s ease",
+        ...(isMobile ? {
+          position: "fixed", top: 0, left: 0, height: "100vh", zIndex: 50,
+          transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+        } : {
+          transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+          position: "relative",
+          marginLeft: sidebarOpen ? 0 : -260,
+          transition: "margin-left 0.25s ease",
+        }),
       }}>
         <div style={{ padding: "14px 12px 10px", flexShrink: 0 }}>
           {/* Logo */}
@@ -226,7 +260,7 @@ export default function Home() {
               {group.items.map(convo => (
                 <div
                   key={convo.id}
-                  onClick={() => setActiveId(convo.id)}
+                  onClick={() => { setActiveId(convo.id); if (isMobile) setSidebarOpen(false); }}
                   style={{
                     display: "flex", alignItems: "center", gap: 8,
                     padding: "8px 10px", borderRadius: 8, cursor: "pointer",
@@ -306,9 +340,9 @@ export default function Home() {
                 <div style={{ margin: "0 auto 20px", width: 64, filter: "drop-shadow(0 0 20px #6c63ff50)" }}>
                   <Logo size={64} />
                 </div>
-                <h2 style={{ fontSize: 26, fontWeight: 700, color: "#fff", marginBottom: 8 }}>How can I help you today?</h2>
+                <h2 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, color: "#fff", marginBottom: 8 }}>How can I help you today?</h2>
                 <p style={{ fontSize: 14, color: "#444", marginBottom: 40 }}>BasedMind — the AI powering the $BMIND ecosystem on Base</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, maxWidth: 540, margin: "0 auto" }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, maxWidth: 540, margin: "0 auto" }}>
                   {SUGGESTIONS.map(s => (
                     <button
                       key={s}
