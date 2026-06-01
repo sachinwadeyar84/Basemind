@@ -26,6 +26,8 @@ Before answering, consider:
 
 **Honesty:** If you don't know something, say so. Never invent prices, addresses, or facts.
 
+**Image requests:** If someone asks you to generate, create, or draw an image — tell them to use the exact phrase "generate image of [description]" and BasedMind will create a real AI image for them. Never draw ASCII art or text representations of images.
+
 ---
 
 ## Formatting rules (always follow)
@@ -105,21 +107,22 @@ function detectQueryTypes(text: string) {
     isGas:       /\bgas\b|gwei|gas fee|gas price|transaction fee|how much to send|cost to transact/i.test(t),
     isTrending:  /trending|pumping|hot coin|what.s hot|top gainer|movers|popular coin|what.s moving/i.test(t),
     isNews:      /news|latest|what.s happening|update|today in crypto|recent|announced|just happened/i.test(t),
-    isImageGen:  /\b(generate|create|make|draw|design|show)\s+(an?\s+)?(image|picture|photo|art|artwork|illustration|logo|banner|wallpaper|meme)\b/i.test(t)
-                 || /\bimage\s+(of|for|showing|with)\b/i.test(t)
-                 || /\bdraw\s+\w/i.test(t),
+    isImageGen:  /\b(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo)\b/i.test(t)
+                 && /\b(generate|create|make|draw|design|show|give|produce|build|get)\b/i.test(t),
   };
 }
 
 // ── Extract clean image prompt from user message ───────────────────────────
 function extractImagePrompt(text: string): string {
   const cleaned = text
-    .replace(/\b(please|can you|could you|i want|i need|give me|show me)\b/gi, "")
-    .replace(/\b(generate|create|make|draw|design|show)\s+(an?\s+)?(image|picture|photo|artwork|illustration|logo|banner|wallpaper|meme)\s*(of|for|showing|about|with)?\s*/gi, "")
-    .replace(/\b(an image of|a picture of|a photo of|art of)\s*/gi, "")
+    .replace(/\b(please|can you|could you|i want|i need|give me|show me|for me)\b/gi, "")
+    .replace(/\b(generate|create|make|draw|design|show|give|produce|build|get)\b/gi, "")
+    .replace(/\b(an?\s+)?(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo)\b/gi, "")
+    .replace(/\b(of|for|showing|about|with|using)\b/gi, "")
     .replace(/[?.!]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
-  return cleaned || text.trim();
+  return cleaned.length > 3 ? cleaned : text.trim();
 }
 
 export async function POST(req: NextRequest) {
