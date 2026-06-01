@@ -107,8 +107,10 @@ function detectQueryTypes(text: string) {
     isGas:       /\bgas\b|gwei|gas fee|gas price|transaction fee|how much to send|cost to transact/i.test(t),
     isTrending:  /trending|pumping|hot coin|what.s hot|top gainer|movers|popular coin|what.s moving/i.test(t),
     isNews:      /news|latest|what.s happening|update|today in crypto|recent|announced|just happened/i.test(t),
-    isImageGen:  /\b(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo)\b/i.test(t)
-                 && /\b(generate|create|make|draw|design|show|give|produce|build|get)\b/i.test(t),
+    isImageGen:  (
+                   /\b(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo)\b/i.test(t)
+                   && /\b(generate|create|make|draw|design|show|give|produce|build|get)\b/i.test(t)
+                 ) || /\b(generate|create|make|draw|show)\b.{0,25}\b(anime|realistic|pixel art|cyberpunk|watercolor|3d|cartoon|sketch|neon|retro)\b/i.test(t),
   };
 }
 
@@ -151,6 +153,10 @@ export async function POST(req: NextRequest) {
     const lastUserMsg: string = messages[messages.length - 1]?.content ?? "";
     const types = detectQueryTypes(lastUserMsg);
 
+    // Also treat short style/variation messages as image gen if a previous image exists
+    const prevPromptForVariation = findPreviousImagePrompt(messages);
+    const shouldGenImage = types.isImageGen || (isVariationRequest(lastUserMsg) && prevPromptForVariation !== "");
+
     // Fetch all relevant data in parallel
     const fetches: Promise<string>[] = [];
 
@@ -172,11 +178,11 @@ export async function POST(req: NextRequest) {
       fetches.push(fetchCryptoNews(keyword || undefined));
     }
 
-    // ── Image generation — fetch server-side, return as base64 ───────────
-    if (types.isImageGen) {
+    // ── Image generation ───────────────────────────────────────────────────
+    if (shouldGenImage) {
       let prompt = extractImagePrompt(lastUserMsg);
 
-      // If variation/redo request, reuse previous prompt from history
+      // Variation request: reuse previous prompt + apply style modifier
       if (!prompt || isVariationRequest(lastUserMsg)) {
         const prevPrompt = findPreviousImagePrompt(messages);
         if (prevPrompt) {
