@@ -270,13 +270,19 @@ export async function POST(req: NextRequest) {
         : m.content,
     }));
 
+    // Multiple API keys (comma-separated in GROQ_API_KEY) + model fallbacks
+    const keys = (process.env.GROQ_API_KEY ?? "").split(",").map(k => k.trim()).filter(Boolean);
     const MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"];
+
+    // Try all keys with best model first, then all keys with fallback models
+    const attempts = MODELS.flatMap(model => keys.map(key => ({ key, model })));
+
     let groqRes: Response | null = null;
-    for (const model of MODELS) {
+    for (const { key, model } of attempts) {
       groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          Authorization: `Bearer ${key}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -287,7 +293,7 @@ export async function POST(req: NextRequest) {
           temperature: 0.6,
         }),
       });
-      if (groqRes.status !== 429) break; // success or non-rate-limit error
+      if (groqRes.status !== 429) break;
     }
 
     if (!groqRes || !groqRes.ok || !groqRes.body) {
