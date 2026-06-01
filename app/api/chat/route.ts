@@ -114,23 +114,35 @@ function detectQueryTypes(text: string) {
 
 // ── Extract clean image prompt from user message ───────────────────────────
 function extractImagePrompt(text: string): string {
-  // Try to pull the subject after "of/for/showing/about" first
-  const afterOf = text.match(/\b(?:image|picture|photo|art|artwork|illustration|meme|banner|logo|wallpaper)\s+(?:of|for|showing|about|depicting)\s+(.+)/i)?.[1];
+  // Pull subject after "of/for/showing/about"
+  const afterOf = text.match(/\b(?:image|picture|photo|art|meme|banner|logo|wallpaper)\s+(?:of|for|showing|about|depicting)\s+(.+)/i)?.[1];
   if (afterOf) return afterOf.replace(/[?.!]$/, "").trim();
 
-  // Strip command words and image-type words, keep the subject
   const cleaned = text
     .replace(/\b(please|can you|could you|i want|i need|give me|show me|for me|help me)\b/gi, "")
     .replace(/\b(generate|create|make|draw|design|show|give|produce|build|get)\b/gi, "")
     .replace(/\b(a |an )?(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo)\b/gi, "")
     .replace(/\b(of|for|showing|about|with|using|depicting)\b/gi, "")
-    .replace(/\b(new|different|style|prompt|another|variation)\b/gi, "")
+    .replace(/\b(new|different|style|prompt|another|variation|again)\b/gi, "")
     .replace(/[?.!]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
-  // If remaining text is too short/meaningless, fall back to full original
-  return cleaned.length > 5 ? cleaned : text.replace(/[?.!]/g, "").trim();
+  return cleaned.length > 5 ? cleaned : "";
+}
+
+// ── Find previous image prompt from conversation history ──────────────────
+function findPreviousImagePrompt(messages: Array<{role: string; content: string}>): string {
+  for (let i = messages.length - 2; i >= 0; i--) {
+    const match = messages[i]?.content?.match(/\*\*Prompt used:\*\*\s*(.+)/);
+    if (match) return match[1].trim();
+  }
+  return "";
+}
+
+// ── Detect if user wants a variation of last image ────────────────────────
+function isVariationRequest(text: string): boolean {
+  return /\b(another|new|different|again|variation|redo|retry|same|more|style)\b/i.test(text) && text.split(" ").length < 12;
 }
 
 export async function POST(req: NextRequest) {
@@ -162,11 +174,24 @@ export async function POST(req: NextRequest) {
 
     // ── Image generation — skip Groq, use Pollinations.ai ─────────────────
     if (types.isImageGen) {
-      const prompt = extractImagePrompt(lastUserMsg);
-      const styledPrompt = `${prompt}, digital art, vibrant colors, high quality, detailed, 4k`;
-      const encoded = encodeURIComponent(styledPrompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=512&height=512&nologo=true&enhance=true`;
-      const reply = `Here's your image! *(May take 5–15 seconds to load)*\n\n![${prompt}](${imageUrl})\n\n**Prompt used:** ${prompt}\n\nTry variations: *"make it anime style"*, *"realistic version"*, *"pixel art"*, *"cyberpunk style"*, *"watercolor painting"*`;
+      let prompt = extractImagePrompt(lastUserMsg);
+
+      // If variation request or prompt is empty, reuse previous prompt from history
+      if (!prompt || isVariationRequest(lastUserMsg)) {
+        const prevPrompt = findPreviousImagePrompt(messages);
+        if (prevPrompt) {
+          const styleMatch = lastUserMsg.match(/\b(anime|realistic|pixel art|cyberpunk|watercolor|3d|cartoon|sketch|oil paint|neon|minimalist|retro)\b/i);
+          prompt = styleMatch ? `${prevPrompt}, ${styleMatch[0]} style` : prevPrompt;
+        }
+      }
+
+      // Final fallback
+      if (!prompt) prompt = lastUserMsg.replace(/[?.!]/g, "").trim();
+
+      const styledPrompt = `${prompt}, digital art, vibrant colors, high quality, 4k`;
+      const seed = Math.floor(Math.random() * 999999);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
+      const reply = `Generating your image... *(takes 5–15 seconds to appear)*\n\n![${prompt}](${imageUrl})\n\n**Prompt used:** ${prompt}\n\nAsk for a variation: *"anime style"*, *"realistic"*, *"pixel art"*, *"cyberpunk"*, *"watercolor"*`;
       const readable = new ReadableStream({
         start(controller) {
           controller.enqueue(new TextEncoder().encode(reply));
