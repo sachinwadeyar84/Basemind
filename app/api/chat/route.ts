@@ -144,7 +144,11 @@ function findPreviousImagePrompt(messages: Array<{role: string; content: string}
 
 // ── Detect if user wants a variation of last image ────────────────────────
 function isVariationRequest(text: string): boolean {
-  return /\b(another|new|different|again|variation|redo|retry|same|more|style)\b/i.test(text) && text.split(" ").length < 12;
+  const t = text.trim();
+  const words = t.split(/\s+/).length;
+  const isStyleWord = /^(anime|realistic|pixel art|cyberpunk|watercolor|3d|cartoon|sketch|neon|retro|minimalist|oil paint|dark|light|colorful|black and white|vintage|futuristic|ghibli|fantasy|sci-fi)(\s+style)?$/i.test(t);
+  const hasVariationWord = /\b(another|new|different|again|variation|redo|retry|same|more|style|anime|realistic|pixel art|cyberpunk|watercolor|3d|cartoon|sketch|neon|retro|minimalist)\b/i.test(t);
+  return (isStyleWord || hasVariationWord) && words < 10;
 }
 
 export async function POST(req: NextRequest) {
