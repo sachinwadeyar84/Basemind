@@ -5,8 +5,13 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "BasedMind — AI on Base",
-  description: "The smartest AI companion for the Base ecosystem. Powered by $BMIND.",
+  title: "BasedMind — AI for Base Crypto",
+  description: "The smartest AI assistant on Base. Real-time prices, DeFi data, trending tokens, gas tracker and more. Powered by $BMIND.",
+  openGraph: {
+    title: "BasedMind — AI for Base Crypto",
+    description: "Real-time crypto AI powered by $BMIND on Base blockchain.",
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({

@@ -2,50 +2,24 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import Logo from "@/components/Logo";
 import { useState, useEffect } from "react";
 
 const FEATURES = [
-  {
-    icon: "📈",
-    title: "Live Token Prices",
-    desc: "Ask the price of any coin — Bitcoin, ETH, meme coins. Real-time data from CoinGecko.",
-  },
-  {
-    icon: "🔍",
-    title: "DEX Screener",
-    desc: "Paste any contract address or name to get live price, volume, liquidity, and market cap.",
-  },
-  {
-    icon: "🏦",
-    title: "DeFi TVL Rankings",
-    desc: "Ask about total value locked on Base or any chain. Live data from DeFiLlama.",
-  },
-  {
-    icon: "😱",
-    title: "Fear & Greed Index",
-    desc: "Real-time crypto sentiment score. Know if the market is panicking or euphoric.",
-  },
-  {
-    icon: "⛽",
-    title: "ETH Gas Tracker",
-    desc: "Live Ethereum gas prices — slow, normal, fast — before any on-chain transaction.",
-  },
-  {
-    icon: "🔥",
-    title: "Trending Tokens",
-    desc: "See what's pumping on CoinGecko right now — coins, NFTs, and top movers.",
-  },
-  {
-    icon: "📰",
-    title: "Crypto News",
-    desc: "Latest headlines from across crypto, fetched in real time so you never miss a move.",
-  },
-  {
-    icon: "🧠",
-    title: "AI Knowledge Base",
-    desc: "Deep expertise in Base, DeFi, meme coins, trading, Solidity, and everything crypto.",
-  },
+  { icon: "📈", title: "Live Token Prices", desc: "Real-time prices for any coin — Bitcoin, ETH, meme coins — straight from CoinGecko." },
+  { icon: "🔍", title: "DEX Screener", desc: "Paste any contract address to instantly get price, volume, liquidity, and market cap." },
+  { icon: "🏦", title: "DeFi TVL Rankings", desc: "Total value locked on Base and every major chain, live from DeFiLlama." },
+  { icon: "😱", title: "Fear & Greed Index", desc: "Real-time market sentiment score — know if crypto is panicking or greedy before you trade." },
+  { icon: "⛽", title: "ETH Gas Tracker", desc: "Live Ethereum gas prices — slow, normal, fast — before any on-chain transaction." },
+  { icon: "🔥", title: "Trending Tokens", desc: "See what's pumping on CoinGecko right now. Coins, NFTs, and top movers." },
+  { icon: "📰", title: "Crypto News", desc: "Latest headlines fetched live so you never miss a market-moving announcement." },
+  { icon: "🧠", title: "Deep AI Knowledge", desc: "Expert-level answers on Base, DeFi, Solidity, trading, meme coins, and everything crypto." },
+];
+
+const STATS = [
+  { value: "Base", label: "Blockchain" },
+  { value: "Free", label: "AI Access" },
+  { value: "<$0.01", label: "Gas per tx" },
+  { value: "8+", label: "Live APIs" },
 ];
 
 export default function LandingPage() {
@@ -59,242 +33,316 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div style={{ background: "#080810", minHeight: "100vh", color: "#fff", fontFamily: "inherit" }}>
+    <div style={{ background: "#050509", minHeight: "100vh", color: "#fff", fontFamily: "Inter, sans-serif", overflowX: "hidden" }}>
 
-      {/* NAV */}
+      {/* ── NAVBAR ── */}
       <nav style={{
+        position: "sticky", top: 0, zIndex: 100,
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: isMobile ? "14px 18px" : "16px 40px",
-        borderBottom: "1px solid #12121e",
-        position: "sticky", top: 0, background: "#080810cc",
-        zIndex: 100, backdropFilter: "blur(12px)",
+        padding: isMobile ? "12px 18px" : "14px 48px",
+        background: "rgba(5,5,9,0.85)", backdropFilter: "blur(16px)",
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Logo size={32} />
-          <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: "-0.3px", color: "#fff" }}>
-            BasedMind
-          </span>
+          <div style={{ width: 36, height: 36, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
+            <Image src="/logo.png" alt="BasedMind" width={36} height={36} style={{ width: "100%", height: "100%", objectFit: "cover" }} priority />
+          </div>
+          <span style={{ fontWeight: 800, fontSize: 16, color: "#fff", letterSpacing: "-0.3px" }}>BasedMind</span>
         </div>
-        <Link href="/chat" style={{
-          padding: isMobile ? "8px 18px" : "10px 24px",
-          background: "linear-gradient(135deg, #1d6fd8, #38bdf8)",
-          borderRadius: 40, color: "#fff", fontWeight: 700,
-          fontSize: isMobile ? 13 : 14, textDecoration: "none",
-          boxShadow: "0 4px 20px #1d6fd840",
-        }}>
-          Launch App →
-        </Link>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {!isMobile && (
+            <a href="#features" style={{ fontSize: 13, color: "#6b7280", textDecoration: "none" }}>Features</a>
+          )}
+          {!isMobile && (
+            <a href="#token" style={{ fontSize: 13, color: "#6b7280", textDecoration: "none", marginRight: 8 }}>Token</a>
+          )}
+          <Link href="/chat" style={{
+            padding: isMobile ? "8px 18px" : "9px 22px",
+            background: "linear-gradient(135deg, #1a5fb4, #2196f3)",
+            borderRadius: 40, color: "#fff", fontWeight: 700,
+            fontSize: 13, textDecoration: "none",
+            boxShadow: "0 4px 16px rgba(33,150,243,0.35)",
+          }}>
+            Launch App →
+          </Link>
+        </div>
       </nav>
 
-      {/* HERO */}
+      {/* ── HERO ── */}
       <section style={{
+        display: "flex", flexDirection: "column", alignItems: "center",
         textAlign: "center",
-        padding: isMobile ? "72px 20px 60px" : "110px 24px 90px",
+        padding: isMobile ? "64px 20px 56px" : "100px 24px 80px",
+        position: "relative",
       }}>
+        {/* Glow blob */}
         <div style={{
-          width: isMobile ? 160 : 220, height: isMobile ? 160 : 220,
-          margin: "0 auto 32px",
-          borderRadius: 32,
+          position: "absolute", top: "10%", left: "50%", transform: "translateX(-50%)",
+          width: 600, height: 400, borderRadius: "50%",
+          background: "radial-gradient(ellipse, rgba(29,111,216,0.12) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }} />
+
+        {/* Logo */}
+        <div style={{
+          width: isMobile ? 150 : 200, height: isMobile ? 150 : 200,
+          borderRadius: isMobile ? 28 : 36,
           overflow: "hidden",
-          boxShadow: "0 0 60px #1d6fd840, 0 0 120px #1d6fd820",
+          marginBottom: 36,
+          boxShadow: "0 0 0 1px rgba(33,150,243,0.2), 0 20px 80px rgba(29,111,216,0.35)",
+          position: "relative", zIndex: 1,
         }}>
           <Image
-            src="/logo.jpg"
+            src="/logo.png"
             alt="BasedMind Logo"
-            width={220}
-            height={220}
+            width={200}
+            height={200}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
             priority
           />
         </div>
 
-        <h1 style={{
-          fontSize: isMobile ? 42 : 72, fontWeight: 900,
-          letterSpacing: isMobile ? "-1px" : "-2px",
-          lineHeight: 1.05, marginBottom: 20,
+        {/* Tag */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "5px 14px", borderRadius: 99,
+          background: "rgba(33,150,243,0.08)", border: "1px solid rgba(33,150,243,0.2)",
+          fontSize: 12, color: "#60a5fa", letterSpacing: "0.5px", marginBottom: 22,
         }}>
-          <span style={{ color: "#fff" }}>BASED</span>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22d3ee", display: "inline-block" }} />
+          AI FOR BASE CRYPTO · $BMIND
+        </div>
+
+        {/* Headline */}
+        <h1 style={{
+          fontSize: isMobile ? 40 : 72, fontWeight: 900,
+          letterSpacing: isMobile ? "-1.5px" : "-3px",
+          lineHeight: 1.0, marginBottom: 22, position: "relative", zIndex: 1,
+        }}>
+          <span style={{ color: "#fff" }}>The Smartest AI</span>
+          <br />
           <span style={{
-            background: "linear-gradient(135deg, #1d6fd8, #38bdf8)",
+            background: "linear-gradient(135deg, #2196f3 0%, #38bdf8 50%, #67e8f9 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-          }}>MIND</span>
+          }}>
+            on Base
+          </span>
         </h1>
 
         <p style={{
-          fontSize: isMobile ? 11 : 13, color: "#334155",
-          letterSpacing: "4px", textTransform: "uppercase",
-          marginBottom: 20,
+          fontSize: isMobile ? 15 : 18, color: "#6b7280",
+          maxWidth: 540, lineHeight: 1.75, marginBottom: 44, position: "relative", zIndex: 1,
         }}>
-          — AI for Base Crypto —
+          Real-time crypto prices, DeFi data, DEX analytics, gas tracker, trending tokens, and expert AI answers — all in one place.
         </p>
 
-        <p style={{
-          fontSize: isMobile ? 15 : 17, color: "#475569",
-          maxWidth: 520, margin: "0 auto 48px",
-          lineHeight: 1.75,
-        }}>
-          The smartest AI assistant on the Base blockchain.
-          Real-time prices, DeFi data, trending tokens, gas tracker,
-          and deep crypto knowledge — all powered by{" "}
-          <span style={{ color: "#38bdf8", fontWeight: 600 }}>$BMIND</span>.
-        </p>
-
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+        {/* CTAs */}
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", position: "relative", zIndex: 1 }}>
           <Link href="/chat" style={{
             padding: isMobile ? "13px 28px" : "15px 36px",
-            background: "linear-gradient(135deg, #1d6fd8, #38bdf8)",
+            background: "linear-gradient(135deg, #1a5fb4, #2196f3)",
             borderRadius: 40, color: "#fff", fontWeight: 700,
             fontSize: isMobile ? 15 : 17, textDecoration: "none",
-            boxShadow: "0 8px 40px #1d6fd850",
+            boxShadow: "0 8px 40px rgba(33,150,243,0.4)",
             display: "inline-block",
           }}>
             Start Chatting Free →
           </Link>
+          <a href="#features" style={{
+            padding: isMobile ? "13px 28px" : "15px 36px",
+            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 40, color: "#9ca3af", fontWeight: 600,
+            fontSize: isMobile ? 15 : 17, textDecoration: "none",
+            display: "inline-block",
+          }}>
+            See Features ↓
+          </a>
+        </div>
+
+        {/* Live badges */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 48, position: "relative", zIndex: 1 }}>
+          {["🔴 Live Prices", "📊 DEX Data", "⛽ Gas Tracker", "🔥 Trending", "😱 Fear & Greed", "📰 Crypto News"].map(tag => (
+            <span key={tag} style={{
+              padding: "5px 13px", background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.06)", borderRadius: 99,
+              fontSize: 11.5, color: "#4b5563",
+            }}>{tag}</span>
+          ))}
         </div>
       </section>
 
-      {/* LIVE DATA BADGE ROW */}
+      {/* ── STATS BAR ── */}
       <div style={{
-        display: "flex", justifyContent: "center", gap: 8,
-        flexWrap: "wrap", padding: "0 20px 60px",
+        maxWidth: 800, margin: "0 auto 80px",
+        display: "grid", gridTemplateColumns: `repeat(${isMobile ? 2 : 4}, 1fr)`,
+        gap: 1, background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden",
+        marginLeft: isMobile ? 16 : "auto", marginRight: isMobile ? 16 : "auto",
       }}>
-        {["Live Prices", "DEX Data", "Gas Tracker", "Trending Coins", "Fear & Greed", "Crypto News"].map(tag => (
-          <span key={tag} style={{
-            padding: "5px 14px", background: "#0d0d1a",
-            border: "1px solid #1a1a30", borderRadius: 99,
-            fontSize: 12, color: "#475569", letterSpacing: "0.3px",
-          }}>{tag}</span>
+        {STATS.map((s, i) => (
+          <div key={s.label} style={{
+            padding: "24px 20px", textAlign: "center",
+            background: "#070711",
+            borderRight: i < STATS.length - 1 && !isMobile ? "1px solid rgba(255,255,255,0.04)" : "none",
+          }}>
+            <div style={{ fontSize: isMobile ? 22 : 26, fontWeight: 900, color: "#38bdf8", letterSpacing: "-0.5px" }}>{s.value}</div>
+            <div style={{ fontSize: 12, color: "#374151", marginTop: 4 }}>{s.label}</div>
+          </div>
         ))}
       </div>
 
-      {/* FEATURES GRID */}
-      <section style={{ padding: isMobile ? "0 16px 70px" : "0 40px 90px", maxWidth: 1100, margin: "0 auto" }}>
-        <h2 style={{
-          textAlign: "center", fontSize: isMobile ? 24 : 32,
-          fontWeight: 800, marginBottom: 10, letterSpacing: "-0.5px",
-        }}>
-          Live Intelligence, Built In
-        </h2>
-        <p style={{ textAlign: "center", color: "#334155", marginBottom: 40, fontSize: 15 }}>
-          No hallucinated prices. Real data, injected in real time.
-        </p>
+      {/* ── FEATURES ── */}
+      <section id="features" style={{ padding: isMobile ? "0 16px 80px" : "0 48px 100px", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <h2 style={{ fontSize: isMobile ? 26 : 38, fontWeight: 800, letterSpacing: "-1px", marginBottom: 12 }}>
+            Live Intelligence, Built In
+          </h2>
+          <p style={{ color: "#4b5563", fontSize: 15 }}>No hallucinated prices. Real data, injected in real time.</p>
+        </div>
 
         <div style={{
           display: "grid",
           gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
-          gap: 12,
+          gap: 10,
         }}>
           {FEATURES.map(f => (
             <div key={f.title} style={{
-              background: "#0c0c18", border: "1px solid #141424",
-              borderRadius: 16, padding: isMobile ? "16px 14px" : "22px 20px",
-            }}>
-              <div style={{ fontSize: isMobile ? 22 : 26, marginBottom: 10 }}>{f.icon}</div>
-              <h3 style={{ fontWeight: 700, fontSize: isMobile ? 13 : 14, marginBottom: 6, color: "#e2e8f0" }}>
-                {f.title}
-              </h3>
-              <p style={{ color: "#374151", fontSize: isMobile ? 11.5 : 13, lineHeight: 1.6 }}>
-                {f.desc}
-              </p>
+              background: "#070711",
+              border: "1px solid rgba(255,255,255,0.05)",
+              borderRadius: 18, padding: isMobile ? "18px 14px" : "24px 20px",
+              transition: "border-color 0.2s",
+            }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(33,150,243,0.3)")}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)")}
+            >
+              <div style={{ fontSize: isMobile ? 22 : 28, marginBottom: 12 }}>{f.icon}</div>
+              <h3 style={{ fontWeight: 700, fontSize: isMobile ? 12.5 : 14, marginBottom: 8, color: "#e2e8f0" }}>{f.title}</h3>
+              <p style={{ color: "#374151", fontSize: isMobile ? 11 : 13, lineHeight: 1.65 }}>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* TOKEN SECTION */}
+      {/* ── HOW IT WORKS ── */}
       <section style={{
+        padding: isMobile ? "60px 20px" : "80px 48px",
+        background: "linear-gradient(180deg, transparent, rgba(29,111,216,0.04), transparent)",
         textAlign: "center",
-        padding: isMobile ? "50px 20px" : "70px 24px",
-        background: "linear-gradient(180deg, transparent, #0a0a1a 40%, transparent)",
       }}>
-        <div style={{
-          display: "inline-block", padding: "4px 14px",
-          background: "#0d0d1a", border: "1px solid #1a1a30",
-          borderRadius: 99, fontSize: 12, color: "#38bdf8",
-          marginBottom: 20, letterSpacing: "1px",
-        }}>
-          $BMIND · BASE BLOCKCHAIN
-        </div>
-        <h2 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 800, marginBottom: 14 }}>
-          The Token Behind the AI
+        <h2 style={{ fontSize: isMobile ? 24 : 34, fontWeight: 800, marginBottom: 12, letterSpacing: "-0.5px" }}>
+          How It Works
         </h2>
-        <p style={{
-          color: "#374151", maxWidth: 480, margin: "0 auto 40px",
-          fontSize: 15, lineHeight: 1.75,
+        <p style={{ color: "#4b5563", marginBottom: 48, fontSize: 15 }}>Three steps to smarter crypto decisions</p>
+        <div style={{
+          display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+          gap: 16, maxWidth: 820, margin: "0 auto",
         }}>
-          BasedMind is a utility meme coin on Base. This app is the product.
-          The AI is the utility. $BMIND holders own a piece of the future of crypto AI.
-        </p>
-
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           {[
-            { value: "Base", label: "Blockchain" },
-            { value: "EVM", label: "Compatible" },
-            { value: "<$0.01", label: "Gas per tx" },
-            { value: "Free", label: "AI Access" },
-          ].map(s => (
-            <div key={s.label} style={{
-              padding: "16px 24px", background: "#0c0c18",
-              border: "1px solid #141424", borderRadius: 14, minWidth: 90,
+            { step: "01", title: "Ask anything", desc: "Type any question — a price, a contract address, market sentiment, gas fees, or just \"what's trending?\"" },
+            { step: "02", title: "Live data fetched", desc: "BasedMind automatically detects what data you need and fetches it from 8+ live APIs in real time." },
+            { step: "03", title: "Smart AI answer", desc: "You get a clear, accurate response with real numbers — not outdated training data." },
+          ].map(item => (
+            <div key={item.step} style={{
+              background: "#070711", border: "1px solid rgba(255,255,255,0.05)",
+              borderRadius: 20, padding: "32px 24px",
             }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "#38bdf8" }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: "#374151", marginTop: 3 }}>{s.label}</div>
+              <div style={{
+                fontSize: 11, fontWeight: 800, color: "#2196f3",
+                letterSpacing: "2px", marginBottom: 16,
+              }}>{item.step}</div>
+              <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 10 }}>{item.title}</h3>
+              <p style={{ color: "#374151", fontSize: 13.5, lineHeight: 1.7 }}>{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* CTA BANNER */}
-      <section style={{
-        padding: isMobile ? "50px 20px" : "70px 40px",
-        textAlign: "center",
-      }}>
+      {/* ── TOKEN ── */}
+      <section id="token" style={{ padding: isMobile ? "60px 20px" : "80px 48px", textAlign: "center" }}>
         <div style={{
-          maxWidth: 600, margin: "0 auto",
-          padding: isMobile ? "36px 24px" : "52px 48px",
-          background: "linear-gradient(135deg, #0d1a30, #0a1220)",
-          border: "1px solid #1a2a40",
-          borderRadius: 24,
-          boxShadow: "0 0 80px #1d6fd820",
+          maxWidth: 680, margin: "0 auto",
+          background: "linear-gradient(135deg, #070d1a, #070714)",
+          border: "1px solid rgba(33,150,243,0.15)",
+          borderRadius: 28, padding: isMobile ? "40px 24px" : "60px 48px",
+          boxShadow: "0 0 100px rgba(29,111,216,0.1)",
+          position: "relative", overflow: "hidden",
         }}>
-          <div style={{ marginBottom: 20, width: 80, height: 80, borderRadius: 16, overflow: "hidden", margin: "0 auto 20px" }}>
-            <Image src="/logo.jpg" alt="BasedMind" width={80} height={80} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <div style={{
+            position: "absolute", top: -60, right: -60,
+            width: 200, height: 200, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(33,150,243,0.08) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }} />
+
+          <div style={{ width: 72, height: 72, borderRadius: 18, overflow: "hidden", margin: "0 auto 20px" }}>
+            <Image src="/logo.png" alt="$BMIND" width={72} height={72} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
-          <h2 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, marginBottom: 10 }}>
-            Ready to go Based?
+
+          <div style={{
+            display: "inline-block", padding: "4px 14px",
+            background: "rgba(33,150,243,0.1)", border: "1px solid rgba(33,150,243,0.2)",
+            borderRadius: 99, fontSize: 11.5, color: "#60a5fa",
+            marginBottom: 20, letterSpacing: "1px",
+          }}>
+            $BMIND · BASE BLOCKCHAIN
+          </div>
+
+          <h2 style={{ fontSize: isMobile ? 24 : 30, fontWeight: 800, marginBottom: 14, letterSpacing: "-0.5px" }}>
+            The Token Behind the AI
           </h2>
-          <p style={{ color: "#374151", marginBottom: 28, fontSize: 15 }}>
-            Ask BasedMind anything — crypto, DeFi, prices, code, or life.
+          <p style={{ color: "#4b5563", fontSize: 15, lineHeight: 1.8, marginBottom: 36 }}>
+            BasedMind is an AI-powered meme coin on the Base blockchain.
+            This app <strong style={{ color: "#9ca3af" }}>is</strong> the product — the AI is the utility.
+            Built on Coinbase&apos;s Base L2 with EVM compatibility and gas fees under $0.01.
           </p>
+
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginBottom: 36 }}>
+            {[
+              { k: "Chain", v: "Base (L2)" },
+              { k: "Gas", v: "<$0.01" },
+              { k: "EVM", v: "Compatible" },
+              { k: "AI", v: "Free Access" },
+            ].map(item => (
+              <div key={item.k} style={{
+                padding: "12px 20px", background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14,
+              }}>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#38bdf8" }}>{item.v}</div>
+                <div style={{ fontSize: 11, color: "#374151", marginTop: 2 }}>{item.k}</div>
+              </div>
+            ))}
+          </div>
+
           <Link href="/chat" style={{
             padding: "14px 36px",
-            background: "linear-gradient(135deg, #1d6fd8, #38bdf8)",
+            background: "linear-gradient(135deg, #1a5fb4, #2196f3)",
             borderRadius: 40, color: "#fff", fontWeight: 700,
-            fontSize: 16, textDecoration: "none",
-            display: "inline-block",
-            boxShadow: "0 6px 30px #1d6fd850",
+            fontSize: 16, textDecoration: "none", display: "inline-block",
+            boxShadow: "0 6px 30px rgba(33,150,243,0.35)",
           }}>
             Launch BasedMind AI →
           </Link>
         </div>
       </section>
 
-      {/* FOOTER */}
+      {/* ── FOOTER ── */}
       <footer style={{
-        padding: isMobile ? "20px 18px" : "24px 40px",
-        borderTop: "1px solid #0e0e1a",
+        padding: isMobile ? "24px 18px" : "28px 48px",
+        borderTop: "1px solid rgba(255,255,255,0.04)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         flexWrap: "wrap", gap: 12,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Logo size={20} />
-          <span style={{ fontSize: 12, color: "#1e1e2e" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, overflow: "hidden" }}>
+            <Image src="/logo.png" alt="BasedMind" width={28} height={28} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </div>
+          <span style={{ fontSize: 13, color: "#1f2937" }}>
             BasedMind · $BMIND on Base · AI for Crypto
           </span>
         </div>
-        <Link href="/chat" style={{ fontSize: 13, color: "#1d6fd8", textDecoration: "none" }}>
-          Launch App →
-        </Link>
+        <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+          <Link href="/chat" style={{ fontSize: 13, color: "#2196f3", textDecoration: "none" }}>Launch App →</Link>
+        </div>
       </footer>
     </div>
   );
