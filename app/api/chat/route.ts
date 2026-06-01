@@ -172,11 +172,11 @@ export async function POST(req: NextRequest) {
       fetches.push(fetchCryptoNews(keyword || undefined));
     }
 
-    // ── Image generation — skip Groq, use Pollinations.ai ─────────────────
+    // ── Image generation — fetch server-side, return as base64 ───────────
     if (types.isImageGen) {
       let prompt = extractImagePrompt(lastUserMsg);
 
-      // If variation request or prompt is empty, reuse previous prompt from history
+      // If variation/redo request, reuse previous prompt from history
       if (!prompt || isVariationRequest(lastUserMsg)) {
         const prevPrompt = findPreviousImagePrompt(messages);
         if (prevPrompt) {
@@ -184,17 +184,27 @@ export async function POST(req: NextRequest) {
           prompt = styleMatch ? `${prevPrompt}, ${styleMatch[0]} style` : prevPrompt;
         }
       }
-
-      // Final fallback
       if (!prompt) prompt = lastUserMsg.replace(/[?.!]/g, "").trim();
 
       const styledPrompt = `${prompt}, digital art, vibrant colors, high quality, 4k`;
       const seed = Math.floor(Math.random() * 999999);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
-      const reply = `Generating your image... *(takes 5–15 seconds to appear)*\n\n![${prompt}](${imageUrl})\n\n**Prompt used:** ${prompt}\n\nAsk for a variation: *"anime style"*, *"realistic"*, *"pixel art"*, *"cyberpunk"*, *"watercolor"*`;
+      const pollUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
+
       const readable = new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode(reply));
+        async start(controller) {
+          const enc = new TextEncoder();
+          controller.enqueue(enc.encode(`Generating your image, please wait...\n\n`));
+          try {
+            const imgRes = await fetch(pollUrl, { signal: AbortSignal.timeout(60000) });
+            if (!imgRes.ok) throw new Error("Pollinations error");
+            const buf = await imgRes.arrayBuffer();
+            const b64 = Buffer.from(buf).toString("base64");
+            const mime = imgRes.headers.get("content-type") || "image/jpeg";
+            const dataUrl = `data:${mime};base64,${b64}`;
+            controller.enqueue(enc.encode(`![${prompt}](${dataUrl})\n\n**Prompt used:** ${prompt}\n\nAsk for a variation: *"anime style"*, *"realistic"*, *"pixel art"*, *"cyberpunk"*, *"watercolor"*`));
+          } catch {
+            controller.enqueue(enc.encode(`⚠️ Image generation timed out. Pollinations.ai may be busy — please try again in a moment.`));
+          }
           controller.close();
         },
       });
