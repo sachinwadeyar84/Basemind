@@ -445,7 +445,7 @@ export default function Home() {
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
                           components={{
-                            img: ({ src, alt }) => <GeneratedImage src={src || ""} alt={alt || ""} />,
+                            img: ({ src, alt }) => <GeneratedImage src={String(src ?? "")} alt={String(alt ?? "")} />,
                           }}
                         >
                           {msg.content}
