@@ -10,6 +10,8 @@ import {
   fetchCryptoNews,
 } from "@/lib/integrations";
 
+export const runtime = "edge";
+
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const SYSTEM_PROMPT = `You are BasedMind — an exceptionally intelligent AI assistant and the official AI of $BMIND on the Base blockchain. You think carefully, explain clearly, and give genuinely useful answers like the world's best AI assistants.
@@ -108,29 +110,47 @@ function detectQueryTypes(text: string) {
     isTrending:  /trending|pumping|hot coin|what.s hot|top gainer|movers|popular coin|what.s moving/i.test(t),
     isNews:      /news|latest|what.s happening|update|today in crypto|recent|announced|just happened/i.test(t),
     isImageGen:  (
-                   /\b(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo)\b/i.test(t)
-                   && /\b(generate|create|make|draw|design|show|give|produce|build|get)\b/i.test(t)
-                 ) || /\b(generate|create|make|draw|show)\b.{0,25}\b(anime|realistic|pixel art|cyberpunk|watercolor|3d|cartoon|sketch|neon|retro)\b/i.test(t),
+                   // Image/art noun + any action verb
+                   /\b(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo|painting|portrait|landscape|scene|poster|avatar|icon|art)\b/i.test(t)
+                   && /\b(generate|create|make|draw|design|show|give|produce|build|get|paint|render|want|need)\b/i.test(t)
+                 )
+                 // Strong visual creation verbs — enough on their own
+                 || /\b(draw|paint|illustrate|sketch)\b/i.test(t)
+                 // "generate" without code/text context
+                 || (/\bgenerate\b/i.test(t) && !/\b(code|function|script|text|component|class|sql|query|api|contract)\b/i.test(t))
+                 // Style-word requests
+                 || /\b(generate|create|make|draw|show|paint|render)\b.{0,40}\b(anime|realistic|pixel art|cyberpunk|watercolor|3d|cartoon|sketch|neon|retro|minimalist|ghibli|fantasy|sci-fi|oil paint)\b/i.test(t),
   };
 }
 
 // ── Extract clean image prompt from user message ───────────────────────────
 function extractImagePrompt(text: string): string {
-  // Pull subject after "of/for/showing/about"
-  const afterOf = text.match(/\b(?:image|picture|photo|art|meme|banner|logo|wallpaper)\s+(?:of|for|showing|about|depicting)\s+(.+)/i)?.[1];
+  // Pull subject after "of/for/showing/about" with an image noun
+  const afterOf = text.match(/\b(?:image|picture|photo|art|meme|banner|logo|wallpaper|painting|portrait|landscape|scene)\s+(?:of|for|showing|about|depicting)\s+(.+)/i)?.[1];
   if (afterOf) return afterOf.replace(/[?.!]$/, "").trim();
 
+  // Pull subject after creation verb: "draw me a X", "generate a X", etc.
+  const afterVerb = text.match(/\b(?:generate|create|make|draw|paint|render|illustrate|show|design|sketch)\s+(?:me\s+)?(?:a\s+|an\s+|the\s+|some\s+)?(.+)/i)?.[1];
+  if (afterVerb) {
+    const stripped = afterVerb
+      .replace(/\b(image|picture|photo|artwork|illustration|of|for)\b/gi, "")
+      .replace(/\s+/g, " ").trim();
+    if (stripped.length > 3) return stripped;
+  }
+
+  // Generic: strip meta/action words, keep the visual description
   const cleaned = text
     .replace(/\b(please|can you|could you|i want|i need|give me|show me|for me|help me)\b/gi, "")
-    .replace(/\b(generate|create|make|draw|design|show|give|produce|build|get)\b/gi, "")
-    .replace(/\b(a |an )?(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo)\b/gi, "")
+    .replace(/\b(generate|create|make|draw|design|show|give|produce|build|get|paint|render|illustrate|sketch)\b/gi, "")
+    .replace(/\b(a |an )?(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo|painting)\b/gi, "")
     .replace(/\b(of|for|showing|about|with|using|depicting)\b/gi, "")
     .replace(/\b(new|different|style|prompt|another|variation|again)\b/gi, "")
     .replace(/[?.!]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
-  return cleaned.length > 5 ? cleaned : "";
+  // Always return something — worst case use the full cleaned message
+  return cleaned.length > 3 ? cleaned : text.replace(/[?.!]/g, "").trim();
 }
 
 // ── Find previous image prompt from conversation history ──────────────────
@@ -198,9 +218,43 @@ export async function POST(req: NextRequest) {
 
       const styledPrompt = `${prompt}, digital art, vibrant colors, high quality, 4k`;
       const seed = Math.floor(Math.random() * 999999);
-      const pollUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
 
-      const reply = `Generating your image...\n\n![${prompt}](${pollUrl})\n\n**Prompt used:** ${prompt}\n\nAsk for a variation: *"anime style"*, *"realistic"*, *"pixel art"*, *"cyberpunk"*, *"watercolor"*`;
+      // Try Hugging Face FLUX.1-schnell first (~3-8s, server-side, free tier)
+      let imageUrl: string | null = null;
+      const hfKey = process.env.HUGGINGFACE_API_KEY;
+      if (hfKey) {
+        try {
+          const hfRes = await fetch(
+            "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${hfKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ inputs: styledPrompt, parameters: { width: 512, height: 512 } }),
+              signal: AbortSignal.timeout(25000),
+            }
+          );
+          if (hfRes.ok) {
+            const contentType = hfRes.headers.get("content-type") ?? "";
+            if (contentType.startsWith("image/")) {
+              const buf = await hfRes.arrayBuffer();
+              const bytes = new Uint8Array(buf);
+              let binary = "";
+              for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+              const b64 = btoa(binary);
+              imageUrl = `data:${contentType};base64,${b64}`;
+            }
+          }
+        } catch {
+          // HF failed — fall through to Pollinations
+        }
+      }
+
+      // Fallback: Pollinations turbo (~10-15s, client-side load)
+      if (!imageUrl) {
+        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}&model=turbo`;
+      }
+
+      const reply = `![${prompt}](${imageUrl})\n\n**Prompt used:** ${prompt}\n\nAsk for a variation: *"anime style"*, *"realistic"*, *"pixel art"*, *"cyberpunk"*, *"watercolor"*`;
       const readable = new ReadableStream({
         start(controller) {
           controller.enqueue(new TextEncoder().encode(reply));

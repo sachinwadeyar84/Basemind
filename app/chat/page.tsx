@@ -8,7 +8,8 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 
 function GeneratedImage({ src, alt }: { src: string; alt: string }) {
-  const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
+  const isDataUrl = src.startsWith("data:");
+  const [status, setStatus] = useState<"loading" | "loaded" | "error">(isDataUrl ? "loaded" : "loading");
   return (
     <div style={{ margin: "12px 0" }}>
       {status === "loading" && (
@@ -22,7 +23,7 @@ function GeneratedImage({ src, alt }: { src: string; alt: string }) {
               <div key={i} className="dot" style={{ width: 7, height: 7, borderRadius: "50%", background: "#6c63ff", animationDelay: `${i*0.2}s` }} />
             ))}
           </div>
-          <span style={{ fontSize: 13, color: "#555" }}>Generating image — please wait 10–30 seconds...</span>
+          <span style={{ fontSize: 13, color: "#555" }}>Generating image — this may take ~10 seconds...</span>
         </div>
       )}
       <img
@@ -39,7 +40,7 @@ function GeneratedImage({ src, alt }: { src: string; alt: string }) {
       />
       {status === "error" && (
         <div style={{ padding: "12px 16px", background: "#1a0808", borderRadius: 10, border: "1px solid #3a1010", fontSize: 13, color: "#f87171" }}>
-          ⚠️ Pollinations.ai is busy. Please try again in a moment.
+          Image generation failed. Please try again.
         </div>
       )}
     </div>
