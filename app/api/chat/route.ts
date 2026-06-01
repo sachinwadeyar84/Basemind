@@ -270,26 +270,30 @@ export async function POST(req: NextRequest) {
         : m.content,
     }));
 
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...groqMessages],
-        stream: true,
-        max_tokens: 2048,
-        temperature: 0.6,
-      }),
-    });
+    const MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"];
+    let groqRes: Response | null = null;
+    for (const model of MODELS) {
+      groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: "system", content: SYSTEM_PROMPT }, ...groqMessages],
+          stream: true,
+          max_tokens: 2048,
+          temperature: 0.6,
+        }),
+      });
+      if (groqRes.status !== 429) break; // success or non-rate-limit error
+    }
 
-    if (!groqRes.ok || !groqRes.body) {
-      const errText = await groqRes.text().catch(() => "unknown");
-      // Return error details as a 200 so the UI shows them instead of "Something went wrong"
+    if (!groqRes || !groqRes.ok || !groqRes.body) {
+      const errText = await groqRes?.text().catch(() => "unknown") ?? "no response";
       return new Response(
-        `**Groq API error ${groqRes.status}:** ${errText.slice(0, 300)}`,
+        `**Error ${groqRes?.status ?? 0}:** ${errText.slice(0, 300)}`,
         { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } }
       );
     }
