@@ -190,8 +190,7 @@ export async function POST(req: NextRequest) {
       const seed = Math.floor(Math.random() * 999999);
       const pollUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
 
-      // Return URL immediately — browser loads image directly (avoids Vercel 10s timeout)
-      const reply = `IMAGEGEN:${pollUrl}:PROMPT:${prompt}`;
+      const reply = `Generating your image...\n\n![${prompt}](${pollUrl})\n\n**Prompt used:** ${prompt}\n\nAsk for a variation: *"anime style"*, *"realistic"*, *"pixel art"*, *"cyberpunk"*, *"watercolor"*`;
       const readable = new ReadableStream({
         start(controller) {
           controller.enqueue(new TextEncoder().encode(reply));
