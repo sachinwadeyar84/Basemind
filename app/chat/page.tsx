@@ -403,7 +403,36 @@ export default function Home() {
                     <div style={{ flexShrink: 0, marginTop: 3 }}><Logo size={isMobile ? 26 : 30} /></div>
                     <div style={{ flex: 1, minWidth: 0, color: "#d1d1d1" }}>
                       <div className="md-body" style={{ fontSize: isMobile ? 14 : 14.5, color: "#d1d1d1" }}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            img: ({ src, alt }) => (
+                              <span style={{ display: "block", margin: "10px 0" }}>
+                                <img
+                                  src={src}
+                                  alt={alt || "Generated image"}
+                                  loading="lazy"
+                                  style={{
+                                    maxWidth: "100%", width: "100%", maxHeight: 480,
+                                    objectFit: "contain", borderRadius: 14,
+                                    border: "1px solid #252535", background: "#111",
+                                    display: "block",
+                                  }}
+                                  onError={(e) => {
+                                    const el = e.currentTarget;
+                                    el.style.display = "none";
+                                    const msg = document.createElement("p");
+                                    msg.textContent = "⚠️ Image failed to load — Pollinations.ai may be busy. Try again in a moment.";
+                                    msg.style.cssText = "color:#f87171;font-size:13px;padding:12px;background:#1a0a0a;border-radius:8px;border:1px solid #3a1a1a;";
+                                    el.parentElement?.appendChild(msg);
+                                  }}
+                                />
+                              </span>
+                            ),
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
                       </div>
                       {msg.content && (
                         <button onClick={() => copyMessage(msg.content, i)} style={{

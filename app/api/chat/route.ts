@@ -114,15 +114,23 @@ function detectQueryTypes(text: string) {
 
 // ── Extract clean image prompt from user message ───────────────────────────
 function extractImagePrompt(text: string): string {
+  // Try to pull the subject after "of/for/showing/about" first
+  const afterOf = text.match(/\b(?:image|picture|photo|art|artwork|illustration|meme|banner|logo|wallpaper)\s+(?:of|for|showing|about|depicting)\s+(.+)/i)?.[1];
+  if (afterOf) return afterOf.replace(/[?.!]$/, "").trim();
+
+  // Strip command words and image-type words, keep the subject
   const cleaned = text
-    .replace(/\b(please|can you|could you|i want|i need|give me|show me|for me)\b/gi, "")
+    .replace(/\b(please|can you|could you|i want|i need|give me|show me|for me|help me)\b/gi, "")
     .replace(/\b(generate|create|make|draw|design|show|give|produce|build|get)\b/gi, "")
-    .replace(/\b(an?\s+)?(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo)\b/gi, "")
-    .replace(/\b(of|for|showing|about|with|using)\b/gi, "")
+    .replace(/\b(a |an )?(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo)\b/gi, "")
+    .replace(/\b(of|for|showing|about|with|using|depicting)\b/gi, "")
+    .replace(/\b(new|different|style|prompt|another|variation)\b/gi, "")
     .replace(/[?.!]/g, "")
     .replace(/\s+/g, " ")
     .trim();
-  return cleaned.length > 3 ? cleaned : text.trim();
+
+  // If remaining text is too short/meaningless, fall back to full original
+  return cleaned.length > 5 ? cleaned : text.replace(/[?.!]/g, "").trim();
 }
 
 export async function POST(req: NextRequest) {
@@ -155,9 +163,10 @@ export async function POST(req: NextRequest) {
     // ── Image generation — skip Groq, use Pollinations.ai ─────────────────
     if (types.isImageGen) {
       const prompt = extractImagePrompt(lastUserMsg);
-      const styledPrompt = `${prompt}, digital art, vibrant, high quality, detailed`;
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=768&height=768&nologo=true&model=flux&seed=${Date.now()}`;
-      const reply = `Here's your image!\n\n![${prompt}](${imageUrl})\n\n**Prompt:** ${prompt}\n\nWant a different style? Try asking me to make it *anime*, *realistic*, *pixel art*, *3D*, or *watercolor*.`;
+      const styledPrompt = `${prompt}, digital art, vibrant colors, high quality, detailed, 4k`;
+      const encoded = encodeURIComponent(styledPrompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=512&height=512&nologo=true&enhance=true`;
+      const reply = `Here's your image! *(May take 5–15 seconds to load)*\n\n![${prompt}](${imageUrl})\n\n**Prompt used:** ${prompt}\n\nTry variations: *"make it anime style"*, *"realistic version"*, *"pixel art"*, *"cyberpunk style"*, *"watercolor painting"*`;
       const readable = new ReadableStream({
         start(controller) {
           controller.enqueue(new TextEncoder().encode(reply));
