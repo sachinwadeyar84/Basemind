@@ -1,4 +1,3 @@
-import Groq from "groq-sdk";
 import { NextRequest } from "next/server";
 import { detectCoins, fetchPrices } from "@/lib/prices";
 import {
@@ -11,8 +10,6 @@ import {
 } from "@/lib/integrations";
 
 export const runtime = "edge";
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const SYSTEM_PROMPT = `You are BasedMind — an exceptionally intelligent AI assistant and the official AI of $BMIND on the Base blockchain. You think carefully, explain clearly, and give genuinely useful answers like the world's best AI assistants.
 
@@ -274,19 +271,48 @@ export async function POST(req: NextRequest) {
         : m.content,
     }));
 
-    const stream = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...groqMessages],
-      stream: true,
-      max_tokens: 2048,
-      temperature: 0.6,
+    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...groqMessages],
+        stream: true,
+        max_tokens: 2048,
+        temperature: 0.6,
+      }),
     });
 
+    if (!groqRes.ok || !groqRes.body) {
+      const errText = await groqRes.text().catch(() => "unknown");
+      console.error("Groq API error:", groqRes.status, errText);
+      return new Response("API error", { status: 500 });
+    }
+
+    // Parse SSE stream and forward just the text tokens
     const readable = new ReadableStream({
       async start(controller) {
-        for await (const chunk of stream) {
-          const text = chunk.choices[0]?.delta?.content ?? "";
-          if (text) controller.enqueue(new TextEncoder().encode(text));
+        const reader = groqRes.body!.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6).trim();
+            if (data === "[DONE]") continue;
+            try {
+              const token = JSON.parse(data).choices?.[0]?.delta?.content ?? "";
+              if (token) controller.enqueue(new TextEncoder().encode(token));
+            } catch { /* skip malformed lines */ }
+          }
         }
         controller.close();
       },
