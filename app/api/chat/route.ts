@@ -105,7 +105,21 @@ function detectQueryTypes(text: string) {
     isGas:       /\bgas\b|gwei|gas fee|gas price|transaction fee|how much to send|cost to transact/i.test(t),
     isTrending:  /trending|pumping|hot coin|what.s hot|top gainer|movers|popular coin|what.s moving/i.test(t),
     isNews:      /news|latest|what.s happening|update|today in crypto|recent|announced|just happened/i.test(t),
+    isImageGen:  /\b(generate|create|make|draw|design|show)\s+(an?\s+)?(image|picture|photo|art|artwork|illustration|logo|banner|wallpaper|meme)\b/i.test(t)
+                 || /\bimage\s+(of|for|showing|with)\b/i.test(t)
+                 || /\bdraw\s+\w/i.test(t),
   };
+}
+
+// ── Extract clean image prompt from user message ───────────────────────────
+function extractImagePrompt(text: string): string {
+  const cleaned = text
+    .replace(/\b(please|can you|could you|i want|i need|give me|show me)\b/gi, "")
+    .replace(/\b(generate|create|make|draw|design|show)\s+(an?\s+)?(image|picture|photo|artwork|illustration|logo|banner|wallpaper|meme)\s*(of|for|showing|about|with)?\s*/gi, "")
+    .replace(/\b(an image of|a picture of|a photo of|art of)\s*/gi, "")
+    .replace(/[?.!]/g, "")
+    .trim();
+  return cleaned || text.trim();
 }
 
 export async function POST(req: NextRequest) {
@@ -133,6 +147,21 @@ export async function POST(req: NextRequest) {
       // extract keyword from message for targeted news
       const keyword = lastUserMsg.match(/news\s+(?:about|on|for)?\s*(\w+)/i)?.[1] || "";
       fetches.push(fetchCryptoNews(keyword || undefined));
+    }
+
+    // ── Image generation — skip Groq, use Pollinations.ai ─────────────────
+    if (types.isImageGen) {
+      const prompt = extractImagePrompt(lastUserMsg);
+      const styledPrompt = `${prompt}, digital art, vibrant, high quality, detailed`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=768&height=768&nologo=true&model=flux&seed=${Date.now()}`;
+      const reply = `Here's your image!\n\n![${prompt}](${imageUrl})\n\n**Prompt:** ${prompt}\n\nWant a different style? Try asking me to make it *anime*, *realistic*, *pixel art*, *3D*, or *watercolor*.`;
+      const readable = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(reply));
+          controller.close();
+        },
+      });
+      return new Response(readable, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
     }
 
     const results = await Promise.all(fetches);

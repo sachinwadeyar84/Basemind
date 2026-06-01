@@ -21,9 +21,9 @@ interface Conversation {
 
 const SUGGESTIONS = [
   "What is the Base blockchain?",
-  "How do meme coins work?",
-  "Tell me about DeFi on Base",
-  "What makes $BMIND special?",
+  "Generate image of a crypto bull riding a rocket",
+  "What's trending in crypto today?",
+  "Create art of $BMIND token on Base blockchain",
 ];
 
 function genId() {

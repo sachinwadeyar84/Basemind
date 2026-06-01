@@ -86,3 +86,15 @@ body {
 .md-body table { width: 100% !important; border-collapse: collapse !important; font-size: 13px !important; margin: 0.75rem 0 !important; }
 .md-body th, .md-body td { border: 1px solid #252535 !important; padding: 8px 12px !important; text-align: left !important; }
 .md-body th { background: #1a1a2e !important; color: #fff !important; font-weight: 600 !important; }
+
+.md-body img {
+  max-width: 100% !important;
+  width: 100% !important;
+  max-height: 480px !important;
+  object-fit: contain !important;
+  border-radius: 14px !important;
+  margin: 0.75rem 0 !important;
+  display: block !important;
+  border: 1px solid #252535 !important;
+  background: #111 !important;
+}
