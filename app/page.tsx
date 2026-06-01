@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import Logo from "@/components/Logo";
 import { useState, useEffect } from "react";
 
@@ -91,11 +92,20 @@ export default function LandingPage() {
         padding: isMobile ? "72px 20px 60px" : "110px 24px 90px",
       }}>
         <div style={{
-          width: isMobile ? 80 : 100, height: isMobile ? 80 : 100,
+          width: isMobile ? 160 : 220, height: isMobile ? 160 : 220,
           margin: "0 auto 32px",
-          filter: "drop-shadow(0 0 48px #1d6fd870)",
+          borderRadius: 32,
+          overflow: "hidden",
+          boxShadow: "0 0 60px #1d6fd840, 0 0 120px #1d6fd820",
         }}>
-          <Logo size={isMobile ? 80 : 100} />
+          <Image
+            src="/logo.jpg"
+            alt="BasedMind Logo"
+            width={220}
+            height={220}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            priority
+          />
         </div>
 
         <h1 style={{
@@ -247,8 +257,8 @@ export default function LandingPage() {
           borderRadius: 24,
           boxShadow: "0 0 80px #1d6fd820",
         }}>
-          <div style={{ marginBottom: 20, filter: "drop-shadow(0 0 20px #1d6fd860)" }}>
-            <Logo size={52} />
+          <div style={{ marginBottom: 20, width: 80, height: 80, borderRadius: 16, overflow: "hidden", margin: "0 auto 20px" }}>
+            <Image src="/logo.jpg" alt="BasedMind" width={80} height={80} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
           <h2 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, marginBottom: 10 }}>
             Ready to go Based?
