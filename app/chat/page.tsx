@@ -7,6 +7,48 @@ import { Send, Plus, MessageSquare, Trash2, Copy, Check, Menu } from "lucide-rea
 import Link from "next/link";
 import Logo from "@/components/Logo";
 
+function GeneratedImage({ src, prompt }: { src: string; prompt: string }) {
+  const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
+  return (
+    <div style={{ margin: "12px 0" }}>
+      {status === "loading" && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "14px 18px", background: "#111", borderRadius: 12,
+          border: "1px solid #1f1f2e", marginBottom: 8,
+        }}>
+          <div style={{ display: "flex", gap: 4 }}>
+            {[0,1,2].map(i => (
+              <div key={i} className="dot" style={{ width: 7, height: 7, borderRadius: "50%", background: "#6c63ff", animationDelay: `${i*0.2}s` }} />
+            ))}
+          </div>
+          <span style={{ fontSize: 13, color: "#666" }}>Generating image... (10–30 seconds)</span>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={prompt}
+        style={{
+          display: status === "loaded" ? "block" : "none",
+          maxWidth: "100%", width: "100%", maxHeight: 480,
+          objectFit: "contain", borderRadius: 14,
+          border: "1px solid #252535",
+        }}
+        onLoad={() => setStatus("loaded")}
+        onError={() => setStatus("error")}
+      />
+      {status === "error" && (
+        <div style={{ padding: "12px 16px", background: "#1a0808", borderRadius: 10, border: "1px solid #3a1010", fontSize: 13, color: "#f87171" }}>
+          ⚠️ Image failed to load — Pollinations.ai may be busy. Try asking again.
+        </div>
+      )}
+      {status === "loaded" && (
+        <p style={{ fontSize: 12, color: "#333", marginTop: 6 }}>Prompt: {prompt}</p>
+      )}
+    </div>
+  );
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -402,39 +444,25 @@ export default function Home() {
                   <div style={{ display: "flex", gap: isMobile ? 10 : 14, alignItems: "flex-start", color: "#d1d1d1" }}>
                     <div style={{ flexShrink: 0, marginTop: 3 }}><Logo size={isMobile ? 26 : 30} /></div>
                     <div style={{ flex: 1, minWidth: 0, color: "#d1d1d1" }}>
+                      {msg.content.startsWith("IMAGEGEN:") ? (() => {
+                        const parts = msg.content.split(":PROMPT:");
+                        const imgUrl = parts[0].replace("IMAGEGEN:", "");
+                        const imgPrompt = parts[1] || "generated image";
+                        return (
+                          <div>
+                            <p style={{ color: "#d1d1d1", marginBottom: 8, fontSize: 14 }}>Here&apos;s your image!</p>
+                            <GeneratedImage src={imgUrl} prompt={imgPrompt} />
+                            <p style={{ fontSize: 13, color: "#555", marginTop: 8 }}>
+                              Ask for a variation: <em style={{ color: "#818cf8" }}>&quot;anime style&quot;</em>, <em style={{ color: "#818cf8" }}>&quot;realistic&quot;</em>, <em style={{ color: "#818cf8" }}>&quot;pixel art&quot;</em>, <em style={{ color: "#818cf8" }}>&quot;cyberpunk&quot;</em>
+                            </p>
+                          </div>
+                        );
+                      })() : (
                       <div className="md-body" style={{ fontSize: isMobile ? 14 : 14.5, color: "#d1d1d1" }}>
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            img: ({ src, alt }) => (
-                              <span style={{ display: "block", margin: "10px 0" }}>
-                                <img
-                                  src={src}
-                                  alt={alt || "Generated image"}
-                                  loading="lazy"
-                                  style={{
-                                    maxWidth: "100%", width: "100%", maxHeight: 480,
-                                    objectFit: "contain", borderRadius: 14,
-                                    border: "1px solid #252535", background: "#111",
-                                    display: "block",
-                                  }}
-                                  onError={(e) => {
-                                    const el = e.currentTarget;
-                                    el.style.display = "none";
-                                    const msg = document.createElement("p");
-                                    msg.textContent = "⚠️ Image failed to load — Pollinations.ai may be busy. Try again in a moment.";
-                                    msg.style.cssText = "color:#f87171;font-size:13px;padding:12px;background:#1a0a0a;border-radius:8px;border:1px solid #3a1a1a;";
-                                    el.parentElement?.appendChild(msg);
-                                  }}
-                                />
-                              </span>
-                            ),
-                          }}
-                        >
-                          {msg.content}
-                        </ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                       </div>
-                      {msg.content && (
+                      )}
+                      {msg.content && !msg.content.startsWith("IMAGEGEN:") && (
                         <button onClick={() => copyMessage(msg.content, i)} style={{
                           marginTop: 8, display: "flex", alignItems: "center", gap: 4,
                           fontSize: 11, color: copied === i ? "#22c55e" : "#3a3a4a",

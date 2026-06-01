@@ -190,21 +190,11 @@ export async function POST(req: NextRequest) {
       const seed = Math.floor(Math.random() * 999999);
       const pollUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
 
+      // Return URL immediately — browser loads image directly (avoids Vercel 10s timeout)
+      const reply = `IMAGEGEN:${pollUrl}:PROMPT:${prompt}`;
       const readable = new ReadableStream({
-        async start(controller) {
-          const enc = new TextEncoder();
-          controller.enqueue(enc.encode(`Generating your image, please wait...\n\n`));
-          try {
-            const imgRes = await fetch(pollUrl, { signal: AbortSignal.timeout(60000) });
-            if (!imgRes.ok) throw new Error("Pollinations error");
-            const buf = await imgRes.arrayBuffer();
-            const b64 = Buffer.from(buf).toString("base64");
-            const mime = imgRes.headers.get("content-type") || "image/jpeg";
-            const dataUrl = `data:${mime};base64,${b64}`;
-            controller.enqueue(enc.encode(`![${prompt}](${dataUrl})\n\n**Prompt used:** ${prompt}\n\nAsk for a variation: *"anime style"*, *"realistic"*, *"pixel art"*, *"cyberpunk"*, *"watercolor"*`));
-          } catch {
-            controller.enqueue(enc.encode(`⚠️ Image generation timed out. Pollinations.ai may be busy — please try again in a moment.`));
-          }
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(reply));
           controller.close();
         },
       });
