@@ -9,7 +9,6 @@ import {
   fetchCryptoNews,
 } from "@/lib/integrations";
 
-export const runtime = "edge";
 
 const SYSTEM_PROMPT = `You are BasedMind — an exceptionally intelligent AI assistant and the official AI of $BMIND on the Base blockchain. You think carefully, explain clearly, and give genuinely useful answers like the world's best AI assistants.
 
@@ -288,8 +287,11 @@ export async function POST(req: NextRequest) {
 
     if (!groqRes.ok || !groqRes.body) {
       const errText = await groqRes.text().catch(() => "unknown");
-      console.error("Groq API error:", groqRes.status, errText);
-      return new Response("API error", { status: 500 });
+      // Return error details as a 200 so the UI shows them instead of "Something went wrong"
+      return new Response(
+        `**Groq API error ${groqRes.status}:** ${errText.slice(0, 300)}`,
+        { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+      );
     }
 
     // Parse SSE stream and forward just the text tokens
@@ -322,7 +324,11 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   } catch (error) {
-    console.error("API error:", error);
-    return new Response("Internal server error", { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("API error:", msg);
+    return new Response(`**Error:** ${msg}`, {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 }
