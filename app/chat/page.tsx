@@ -399,10 +399,10 @@ export default function Home() {
                   </div>
                 ) : (
                   /* AI message — full width, small logo left */
-                  <div style={{ display: "flex", gap: isMobile ? 10 : 14, alignItems: "flex-start" }}>
+                  <div style={{ display: "flex", gap: isMobile ? 10 : 14, alignItems: "flex-start", color: "#d1d1d1" }}>
                     <div style={{ flexShrink: 0, marginTop: 3 }}><Logo size={isMobile ? 26 : 30} /></div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="md-body" style={{ fontSize: isMobile ? 14 : 14.5 }}>
+                    <div style={{ flex: 1, minWidth: 0, color: "#d1d1d1" }}>
+                      <div className="md-body" style={{ fontSize: isMobile ? 14 : 14.5, color: "#d1d1d1" }}>
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                       </div>
                       {msg.content && (
