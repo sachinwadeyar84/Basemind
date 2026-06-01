@@ -1,6 +1,14 @@
 import Groq from "groq-sdk";
 import { NextRequest } from "next/server";
 import { detectCoins, fetchPrices } from "@/lib/prices";
+import {
+  fetchDexScreener,
+  fetchDefiLlama,
+  fetchFearGreed,
+  fetchGasPrice,
+  fetchTrending,
+  fetchCryptoNews,
+} from "@/lib/integrations";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -34,9 +42,19 @@ Before answering, consider:
 
 ---
 
-## Live price data
+## Live data blocks — USE THESE WHEN PROVIDED
 
-If the user message contains \`[LIVE PRICE DATA]\`, those are real-time numbers fetched right now. Use them directly in your answer with the price, 24h % change, and market cap. Never say "I don't have real-time data" when this block is present.
+When the user message contains any of these blocks, use the exact data in your answer:
+
+- \`[LIVE PRICE DATA]\` — real-time token prices from CoinGecko. Use the exact price, 24h % change, and market cap.
+- \`[DEX SCREENER LIVE DATA]\` — real-time data for any token pair. Present price, volume, liquidity, and market cap clearly.
+- \`[DEFILLLAMA LIVE DATA]\` — current TVL across chains. Use these numbers to give context on DeFi market size.
+- \`[CRYPTO FEAR & GREED INDEX]\` — current market sentiment. Explain what the score means for traders.
+- \`[LIVE ETH GAS PRICES]\` — current gas costs. Recommend which speed to use based on urgency.
+- \`[TRENDING ON COINGECKO]\` — what's hot right now. Give your analysis on why these might be trending.
+- \`[LATEST CRYPTO NEWS]\` — recent headlines. Summarize and give your take on implications.
+
+Never say "I don't have real-time data" when any of the above blocks are present in the message.
 
 ---
 
@@ -74,57 +92,56 @@ If the user message contains \`[LIVE PRICE DATA]\`, those are real-time numbers 
 
 ---
 
-## Response quality examples
+Always think deeply, format cleanly, and be genuinely useful.`;
 
-USER: what is gas fee?
-RESPONSE: Gas is the fee paid to process a transaction on a blockchain. On **Ethereum mainnet**, gas can cost **$5–$50+** depending on network congestion. On **Base** (an L2), the same transaction costs **under $0.01** — that's the entire point of L2s. Gas is always paid in **ETH**, even on Base. Want me to show you how to estimate gas before sending a transaction?
-
----
-
-USER: explain impermanent loss with example
-RESPONSE:
-## Impermanent Loss Explained
-
-When you provide liquidity to a DEX pool (e.g., ETH/USDC), your tokens automatically rebalance as prices change. If ETH pumps, the pool sells your ETH for USDC to keep the ratio balanced — leaving you with **less ETH than if you'd just held**.
-
-## Example
-
-You deposit **$1,000** → 0.5 ETH + $500 USDC (ETH price = $1,000)
-
-ETH then doubles to **$2,000**:
-- Your LP position is worth: **~$1,414**
-- If you'd just held: **$1,500** (0.5 ETH × $2,000)
-- **Impermanent loss = ~$86 (5.7%)**
-
-The loss is "impermanent" — if ETH returns to $1,000, it disappears. It only becomes permanent when you withdraw at the changed price.
-
-## When it matters most
-- **High-volatility pairs** (ETH/MEME): IL can be severe
-- **Stable pairs** (USDC/USDT): IL is near zero
-- Fee income can offset IL if the pool has high trading volume
-
-Want me to calculate IL for a specific pair or price move?
-
----
-
-Always think deeply, format cleanly, and be genuinely useful. Match or exceed this quality every time.`;
+// ── Query type detection ───────────────────────────────────────────────────
+function detectQueryTypes(text: string) {
+  const t = text.toLowerCase();
+  return {
+    isPrice:     /price|worth|how much|trading at|value of|cost of|market cap|mcap/i.test(t),
+    isDex:       /0x[a-fA-F0-9]{40}/i.test(text) || /dex screener|check token|token analysis|pair info|liquidity of|volume of/i.test(t),
+    isDefi:      /tvl|total value locked|defi protocol|protocol ranking|biggest defi|chain tvl|base tvl/i.test(t),
+    isFearGreed: /fear|greed|sentiment|market mood|market feeling|market psychology/i.test(t),
+    isGas:       /\bgas\b|gwei|gas fee|gas price|transaction fee|how much to send|cost to transact/i.test(t),
+    isTrending:  /trending|pumping|hot coin|what.s hot|top gainer|movers|popular coin|what.s moving/i.test(t),
+    isNews:      /news|latest|what.s happening|update|today in crypto|recent|announced|just happened/i.test(t),
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
+    const lastUserMsg: string = messages[messages.length - 1]?.content ?? "";
+    const types = detectQueryTypes(lastUserMsg);
 
-    const lastUserMsg = messages[messages.length - 1]?.content ?? "";
-    const isPriceQuery = /price|worth|cost|value|how much|trading|market cap|mcap/i.test(lastUserMsg);
-    let priceContext = "";
-    if (isPriceQuery) {
+    // Fetch all relevant data in parallel
+    const fetches: Promise<string>[] = [];
+
+    if (types.isPrice) {
       const coins = detectCoins(lastUserMsg);
-      if (coins.length > 0) priceContext = await fetchPrices(coins);
+      if (coins.length > 0) fetches.push(fetchPrices(coins));
     }
+    if (types.isDex) {
+      const addr = lastUserMsg.match(/0x[a-fA-F0-9]{40}/i)?.[0] || lastUserMsg;
+      fetches.push(fetchDexScreener(addr));
+    }
+    if (types.isDefi)      fetches.push(fetchDefiLlama());
+    if (types.isFearGreed) fetches.push(fetchFearGreed());
+    if (types.isGas)       fetches.push(fetchGasPrice());
+    if (types.isTrending)  fetches.push(fetchTrending());
+    if (types.isNews) {
+      // extract keyword from message for targeted news
+      const keyword = lastUserMsg.match(/news\s+(?:about|on|for)?\s*(\w+)/i)?.[1] || "";
+      fetches.push(fetchCryptoNews(keyword || undefined));
+    }
+
+    const results = await Promise.all(fetches);
+    const liveContext = results.filter(Boolean).join("");
 
     const groqMessages = messages.map((m: { role: string; content: string }, i: number) => ({
       role: m.role === "assistant" ? "assistant" : "user",
-      content: i === messages.length - 1 && priceContext
-        ? m.content + priceContext
+      content: i === messages.length - 1 && liveContext
+        ? m.content + liveContext
         : m.content,
     }));
 
@@ -150,7 +167,7 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   } catch (error) {
-    console.error("Groq API error:", error);
+    console.error("API error:", error);
     return new Response("Internal server error", { status: 500 });
   }
 }
