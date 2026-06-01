@@ -190,7 +190,7 @@ export default function Home() {
   if (olderItems.length) groups.push({ label: "Older", items: olderItems });
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#0d0d0d", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100dvh", background: "#0d0d0d", overflow: "hidden" }}>
 
       {/* Mobile backdrop */}
       {isMobile && sidebarOpen && (
@@ -214,7 +214,7 @@ export default function Home() {
         overflow: "hidden",
         transition: "transform 0.25s ease",
         ...(isMobile ? {
-          position: "fixed", top: 0, left: 0, height: "100vh", zIndex: 50,
+          position: "fixed", top: 0, left: 0, height: "100dvh", zIndex: 50,
           transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
         } : {
           transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
@@ -312,15 +312,26 @@ export default function Home() {
       {/* MAIN AREA */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-        {/* Top bar — ChatGPT style */}
+        {/* Top bar */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: isMobile ? "10px 16px" : "10px 20px",
-          borderBottom: "1px solid #1a1a1a", minHeight: 52,
+          padding: isMobile ? "10px 14px" : "10px 20px",
+          borderBottom: "1px solid #1a1a1a",
+          minHeight: isMobile ? 56 : 52,
+          background: "#0d0d0d",
         }}>
-          <button onClick={() => setSidebarOpen(o => !o)}
-            style={{ background: "none", border: "none", color: "#666", cursor: "pointer", padding: 6, borderRadius: 8, display: "flex" }}>
-            <Menu size={20} />
+          {/* Hamburger — opens sidebar */}
+          <button
+            onClick={() => setSidebarOpen(o => !o)}
+            style={{
+              background: "#1a1a1a", border: "1px solid #2a2a2a",
+              color: "#ccc", cursor: "pointer",
+              padding: "8px 10px", borderRadius: 10, display: "flex",
+              alignItems: "center", gap: 6,
+            }}
+          >
+            <Menu size={18} />
+            {isMobile && <span style={{ fontSize: 12, color: "#888", fontWeight: 600 }}>History</span>}
           </button>
 
           {/* Center: logo + name */}
@@ -329,10 +340,18 @@ export default function Home() {
             <span style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>BasedMind</span>
           </div>
 
-          {/* Right: new chat icon on mobile */}
-          <button onClick={newChat}
-            style={{ background: "none", border: "none", color: "#666", cursor: "pointer", padding: 6, borderRadius: 8, display: "flex" }}>
-            <Plus size={20} />
+          {/* New chat button */}
+          <button
+            onClick={newChat}
+            style={{
+              background: "linear-gradient(135deg,#1d6fd8,#38bdf8)",
+              border: "none", color: "#fff", cursor: "pointer",
+              padding: "8px 12px", borderRadius: 10, display: "flex",
+              alignItems: "center", gap: 6,
+            }}
+          >
+            <Plus size={18} />
+            {isMobile && <span style={{ fontSize: 12, fontWeight: 700 }}>New</span>}
           </button>
         </div>
 

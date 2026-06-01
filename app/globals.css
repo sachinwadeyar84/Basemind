@@ -6,8 +6,6 @@ body {
   background: #0d0d0d;
   color: #ececec;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  height: 100vh;
-  overflow: hidden;
 }
 
 ::-webkit-scrollbar { width: 5px; }
