@@ -285,7 +285,7 @@ const GT_TO_DEX: Record<string, string> = {
 export async function fetchTrending(): Promise<string> {
   try {
     const res = await fetch(
-      "https://api.geckoterminal.com/api/v2/networks/trending_pools?page=1",
+      "https://api.geckoterminal.com/api/v2/networks/base/trending_pools?page=1",
       { headers: { Accept: "application/json;version=20230302" }, cache: "no-store" }
     );
     if (!res.ok) throw new Error("gecko failed");
@@ -312,7 +312,7 @@ export async function fetchTrending(): Promise<string> {
       const chain = network.toUpperCase();
 
       return (
-        `${i + 1}. **${a.name}** [${chain}]\n` +
+        `${i + 1}. **${a.name}** [BASE]\n` +
         `   Price: ${price} | 24h: ${arrow}${Math.abs(ch24).toFixed(1)}%\n` +
         `   Vol 24h: $${vol.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
         `Liq: $${liq.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
@@ -321,7 +321,7 @@ export async function fetchTrending(): Promise<string> {
       );
     });
 
-    return `\n\n[TRENDING POOLS — Last 24h]\n${lines.join("\n")}\n`;
+    return `\n\n[TRENDING POOLS ON BASE — Last 24h]\n${lines.join("\n")}\n`;
   } catch {
     // CoinGecko fallback (no DEX links available)
     try {
