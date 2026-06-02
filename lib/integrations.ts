@@ -274,32 +274,78 @@ export async function fetchGasPrice(): Promise<string> {
   }
 }
 
-// ── Trending Tokens (CoinGecko) ────────────────────────────────────────────
+// ── Trending Tokens — GeckoTerminal (24h data + DEX Screener links) ────────
+const GT_TO_DEX: Record<string, string> = {
+  eth: "ethereum", bsc: "bsc", base: "base",
+  polygon_pos: "polygon", arbitrum: "arbitrum",
+  optimism: "optimism", avax: "avalanche",
+  solana: "solana", fantom: "fantom",
+};
+
 export async function fetchTrending(): Promise<string> {
   try {
-    const res = await fetch("https://api.coingecko.com/api/v3/search/trending", { cache: "no-store" });
-    if (!res.ok) return "";
+    const res = await fetch(
+      "https://api.geckoterminal.com/api/v2/networks/trending_pools?page=1",
+      { headers: { Accept: "application/json;version=20230302" }, cache: "no-store" }
+    );
+    if (!res.ok) throw new Error("gecko failed");
     const data = await res.json();
 
-    const coins = (data.coins || []).slice(0, 7).map((c: any, i: number) => {
-      const item = c.item;
-      const change = item.data?.price_change_percentage_24h?.usd;
-      const arrow = change >= 0 ? "▲" : "▼";
-      const changeStr = change != null ? ` ${arrow}${Math.abs(change).toFixed(1)}%` : "";
-      const price = item.data?.price ? ` — $${Number(item.data.price).toLocaleString(undefined, { maximumFractionDigits: 6 })}` : "";
-      return `  ${i + 1}. ${item.name} (${item.symbol.toUpperCase()})${price}${changeStr}`;
+    const pools = (data.data || []).slice(0, 10);
+    if (!pools.length) throw new Error("empty");
+
+    const lines = pools.map((p: any, i: number) => {
+      const a        = p.attributes;
+      const network  = p.relationships?.network?.data?.id ?? "";
+      const dexChain = GT_TO_DEX[network] ?? network;
+      const poolAddr = a.address ?? "";
+      const dexLink  = poolAddr ? `https://dexscreener.com/${dexChain}/${poolAddr}` : "";
+
+      const price    = a.base_token_price_usd
+        ? `$${parseFloat(a.base_token_price_usd).toLocaleString(undefined, { maximumSignificantDigits: 4 })}`
+        : "N/A";
+      const ch24  = parseFloat(a.price_change_percentage?.h24 ?? "0");
+      const arrow = ch24 >= 0 ? "▲" : "▼";
+      const vol   = parseFloat(a.volume_usd?.h24 ?? "0");
+      const liq   = parseFloat(a.reserve_in_usd ?? "0");
+      const txns  = (a.transactions?.h24?.buys ?? 0) + (a.transactions?.h24?.sells ?? 0);
+      const chain = network.toUpperCase();
+
+      return (
+        `${i + 1}. **${a.name}** [${chain}]\n` +
+        `   Price: ${price} | 24h: ${arrow}${Math.abs(ch24).toFixed(1)}%\n` +
+        `   Vol 24h: $${vol.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
+        `Liq: $${liq.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
+        `Txns: ${txns.toLocaleString()}\n` +
+        (dexLink ? `   🔗 ${dexLink}\n` : "")
+      );
     });
 
-    const nfts = (data.nfts || []).slice(0, 3).map((n: any) =>
-      `  • ${n.name} — floor: ${n.data?.floor_price || "N/A"} ${n.data?.floor_price_in_usd ? `($${Number(n.data.floor_price_in_usd).toFixed(0)})` : ""}`
-    );
-
-    return (
-      `\n\n[TRENDING ON COINGECKO RIGHT NOW]\nTop coins:\n${coins.join("\n")}` +
-      (nfts.length ? `\nTrending NFTs:\n${nfts.join("\n")}` : "") + "\n"
-    );
+    return `\n\n[TRENDING POOLS — Last 24h]\n${lines.join("\n")}\n`;
   } catch {
-    return "";
+    // CoinGecko fallback (no DEX links available)
+    try {
+      const res = await fetch("https://api.coingecko.com/api/v3/search/trending", { cache: "no-store" });
+      if (!res.ok) return "";
+      const data = await res.json();
+      const coins = (data.coins || []).slice(0, 7).map((c: any, i: number) => {
+        const item = c.item;
+        const ch = item.data?.price_change_percentage_24h?.usd;
+        const arrow = (ch ?? 0) >= 0 ? "▲" : "▼";
+        const price = item.data?.price
+          ? `$${Number(item.data.price).toLocaleString(undefined, { maximumFractionDigits: 6 })}`
+          : "N/A";
+        const dexLink = `https://dexscreener.com/search?q=${encodeURIComponent(item.symbol)}`;
+        return (
+          `${i + 1}. **${item.name}** (${item.symbol.toUpperCase()})\n` +
+          `   Price: ${price} | 24h: ${arrow}${Math.abs(ch ?? 0).toFixed(1)}%\n` +
+          `   🔗 ${dexLink}\n`
+        );
+      });
+      return `\n\n[TRENDING ON COINGECKO — Last 24h]\n${coins.join("\n")}\n`;
+    } catch {
+      return "";
+    }
   }
 }
 
