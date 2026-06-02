@@ -62,7 +62,7 @@ When the user message contains any of these blocks, use the exact data in your a
 - \`[LIVE ETH GAS PRICES]\` — current gas costs. Recommend which speed to use based on urgency.
 - \`[TRENDING POOLS ON BASE]\` or \`[TRENDING ON COINGECKO]\` — top trending tokens on Base right now. For each token render the DEX Screener link as a clickable markdown link: [View on DEX Screener](url). Give your analysis on why each might be trending.
 - \`[LATEST CRYPTO NEWS]\` — recent headlines. Summarize and give your take on implications.
-- \`[FULL TOKEN ANALYSIS]\` — DEX data + GoPlus security scan + BasedMind Score. Present all data clearly. Explain the score. Warn strongly if honeypot or high risk. Always remind the user to DYOR.
+- \`[FULL TOKEN ANALYSIS]\` — DEX data + GoPlus security scan + BasedMind Score. Present all data clearly. Render the DEX Screener URL as a clickable link: [View on DEX Screener](url). Explain the score. Warn strongly if honeypot or high risk. Always remind the user to DYOR.
 - \`[NEW GEM FINDER]\` — new tokens on Base launched in the last 24h, filtered for liquidity and volume. Analyze each one, highlight the most promising, warn about risks. Remind users these are very early and high risk.
 
 Never say "I don't have real-time data" when any of the above blocks are present in the message.

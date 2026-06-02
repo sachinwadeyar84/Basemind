@@ -40,13 +40,15 @@ export async function fetchFullTokenAnalysis(address: string): Promise<string> {
       const twitter = top.info?.socials?.find((s: any) => s.type === "twitter")?.url ?? "";
       const website = top.info?.websites?.[0]?.url ?? "";
 
+      const dexLink = `https://dexscreener.com/${top.chainId}/${top.baseToken.address}`;
       dexSection =
         `Token: ${top.baseToken.name} (${top.baseToken.symbol.toUpperCase()}) on ${top.chainId}\n` +
         `Price: $${top.priceUsd} | 24h: ${arrow}${Math.abs(Number(change24h)).toFixed(2)}%\n` +
         `Market Cap: ${mcap} | Liquidity: ${liq} | Volume 24h: ${vol}\n` +
         `Pair created: ${age} | DEX: ${top.dexId}\n` +
         (twitter ? `Twitter/X: ${twitter}\n` : "") +
-        (website ? `Website: ${website}\n` : "");
+        (website ? `Website: ${website}\n` : "") +
+        `DEX Screener: ${dexLink}\n`;
     }
 
     // ── Security section + Score ───────────────────────────────────────────
@@ -137,12 +139,16 @@ export async function fetchNewGems(): Promise<string> {
       const ch   = parseFloat(a.price_change_percentage?.h24 ?? "0");
       const arrow = ch >= 0 ? "▲" : "▼";
       const hrs  = Math.round((now - new Date(a.pool_created_at).getTime()) / 36e5);
-      const addr = p.relationships?.base_token?.data?.id?.split("_")[1] ?? "";
+      const baseTokenRel = p.relationships?.base_token?.data?.id ?? "";
+      const tokenAddr = baseTokenRel.includes("_") ? baseTokenRel.split("_").slice(1).join("_") : "";
+      const dexLink = tokenAddr ? `https://dexscreener.com/base/${tokenAddr}` : "";
       return (
         `  ${i + 1}. ${a.name} ${arrow}${Math.abs(ch).toFixed(1)}%\n` +
         `     Liq: $${liq.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
         `Vol 24h: $${vol.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
-        `${hrs}h old${addr ? ` | CA: ${addr}` : ""}`
+        `${hrs}h old` +
+        (tokenAddr ? ` | CA: \`${tokenAddr}\`` : "") +
+        (dexLink ? `\n     🔗 ${dexLink}` : "")
       );
     });
 
@@ -295,11 +301,11 @@ export async function fetchTrending(): Promise<string> {
     if (!pools.length) throw new Error("empty");
 
     const lines = pools.map((p: any, i: number) => {
-      const a        = p.attributes;
-      const network  = p.relationships?.network?.data?.id ?? "";
-      const dexChain = GT_TO_DEX[network] ?? network;
-      const poolAddr = a.address ?? "";
-      const dexLink  = poolAddr ? `https://dexscreener.com/${dexChain}/${poolAddr}` : "";
+      const a = p.attributes;
+      // Extract token address from relationship id like "base_0x1234..."
+      const baseTokenRel = p.relationships?.base_token?.data?.id ?? "";
+      const tokenAddr = baseTokenRel.includes("_") ? baseTokenRel.split("_").slice(1).join("_") : (a.address ?? "");
+      const dexLink = tokenAddr ? `https://dexscreener.com/base/${tokenAddr}` : "";
 
       const price    = a.base_token_price_usd
         ? `$${parseFloat(a.base_token_price_usd).toLocaleString(undefined, { maximumSignificantDigits: 4 })}`
@@ -309,7 +315,6 @@ export async function fetchTrending(): Promise<string> {
       const vol   = parseFloat(a.volume_usd?.h24 ?? "0");
       const liq   = parseFloat(a.reserve_in_usd ?? "0");
       const txns  = (a.transactions?.h24?.buys ?? 0) + (a.transactions?.h24?.sells ?? 0);
-      const chain = network.toUpperCase();
 
       return (
         `${i + 1}. **${a.name}** [BASE]\n` +
