@@ -7,6 +7,8 @@ import {
   fetchGasPrice,
   fetchTrending,
   fetchCryptoNews,
+  fetchFullTokenAnalysis,
+  fetchNewGems,
 } from "@/lib/integrations";
 
 
@@ -53,6 +55,8 @@ When the user message contains any of these blocks, use the exact data in your a
 - \`[LIVE ETH GAS PRICES]\` — current gas costs. Recommend which speed to use based on urgency.
 - \`[TRENDING ON COINGECKO]\` — what's hot right now. Give your analysis on why these might be trending.
 - \`[LATEST CRYPTO NEWS]\` — recent headlines. Summarize and give your take on implications.
+- \`[FULL TOKEN ANALYSIS]\` — DEX data + GoPlus security scan + BasedMind Score. Present all data clearly. Explain the score. Warn strongly if honeypot or high risk. Always remind the user to DYOR.
+- \`[NEW GEM FINDER]\` — new tokens on Base launched in the last 24h, filtered for liquidity and volume. Analyze each one, highlight the most promising, warn about risks. Remind users these are very early and high risk.
 
 Never say "I don't have real-time data" when any of the above blocks are present in the message.
 
@@ -99,7 +103,9 @@ function detectQueryTypes(text: string) {
   const t = text.toLowerCase();
   return {
     isPrice:     /price|worth|how much|trading at|value of|cost of|market cap|mcap/i.test(t),
-    isDex:       /0x[a-fA-F0-9]{40}/i.test(text) || /dex screener|check token|token analysis|pair info|liquidity of|volume of/i.test(t),
+    isCA:        /0x[a-fA-F0-9]{40}/i.test(text),
+    isDex:       !(/0x[a-fA-F0-9]{40}/i.test(text)) && /dex screener|check token|pair info|liquidity of|volume of/i.test(t),
+    isNewGems:   /new token|new gem|new launch|launched today|launched this week|find gem|early gem|new coin|new project|gem finder|what.s new on base|recently launched|new on base/i.test(t),
     isDefi:      /tvl|total value locked|defi protocol|protocol ranking|biggest defi|chain tvl|base tvl/i.test(t),
     isFearGreed: /fear|greed|sentiment|market mood|market feeling|market psychology/i.test(t),
     isGas:       /\bgas\b|gwei|gas fee|gas price|transaction fee|how much to send|cost to transact/i.test(t),
@@ -184,10 +190,14 @@ export async function POST(req: NextRequest) {
       const coins = detectCoins(lastUserMsg);
       if (coins.length > 0) fetches.push(fetchPrices(coins));
     }
-    if (types.isDex) {
-      const addr = lastUserMsg.match(/0x[a-fA-F0-9]{40}/i)?.[0] || lastUserMsg;
-      fetches.push(fetchDexScreener(addr));
+    if (types.isCA) {
+      const addr = lastUserMsg.match(/0x[a-fA-F0-9]{40}/i)![0];
+      fetches.push(fetchFullTokenAnalysis(addr));
     }
+    if (types.isDex) {
+      fetches.push(fetchDexScreener(lastUserMsg));
+    }
+    if (types.isNewGems) fetches.push(fetchNewGems());
     if (types.isDefi)      fetches.push(fetchDefiLlama());
     if (types.isFearGreed) fetches.push(fetchFearGreed());
     if (types.isGas)       fetches.push(fetchGasPrice());

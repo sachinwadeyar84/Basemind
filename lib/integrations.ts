@@ -1,3 +1,157 @@
+const GOPLUS_CHAIN: Record<string, string> = {
+  ethereum: "1", eth: "1",
+  bsc: "56", "binance-smart-chain": "56",
+  base: "8453",
+  polygon: "137",
+  arbitrum: "42161",
+  optimism: "10",
+  avalanche: "43114",
+  fantom: "250",
+  solana: "solana",
+};
+
+// ── Full Token Analysis — DEX Screener + GoPlus Security + Score ───────────
+export async function fetchFullTokenAnalysis(address: string): Promise<string> {
+  try {
+    // Fetch DEX Screener and GoPlus simultaneously where possible
+    const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${address}`;
+    const dexRes = await fetch(dexUrl, { cache: "no-store" });
+    const dexData = dexRes.ok ? await dexRes.json() : { pairs: [] };
+    const pairs: any[] = (dexData.pairs || []).sort((a: any, b: any) =>
+      (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0)
+    ).slice(0, 1);
+    const top = pairs[0];
+
+    const chainId = top ? (GOPLUS_CHAIN[top.chainId] ?? "8453") : "8453";
+    const gpUrl = `https://api.gopluslabs.io/api/v1/token_security/${chainId}?contract_addresses=${address.toLowerCase()}`;
+    const gpRes = await fetch(gpUrl, { cache: "no-store" });
+    const gpData = gpRes.ok ? await gpRes.json() : {};
+    const sec = gpData.result?.[address.toLowerCase()];
+
+    // ── DEX section ────────────────────────────────────────────────────────
+    let dexSection = "";
+    if (top) {
+      const change24h = top.priceChange?.h24 ?? 0;
+      const arrow = Number(change24h) >= 0 ? "▲" : "▼";
+      const mcap = top.marketCap ? `$${Number(top.marketCap).toLocaleString()}` : "N/A";
+      const liq  = top.liquidity?.usd ? `$${Number(top.liquidity.usd).toLocaleString()}` : "N/A";
+      const vol  = top.volume?.h24 ? `$${Number(top.volume.h24).toLocaleString()}` : "N/A";
+      const age  = top.pairCreatedAt ? new Date(top.pairCreatedAt).toLocaleDateString() : "N/A";
+      const twitter = top.info?.socials?.find((s: any) => s.type === "twitter")?.url ?? "";
+      const website = top.info?.websites?.[0]?.url ?? "";
+
+      dexSection =
+        `Token: ${top.baseToken.name} (${top.baseToken.symbol.toUpperCase()}) on ${top.chainId}\n` +
+        `Price: $${top.priceUsd} | 24h: ${arrow}${Math.abs(Number(change24h)).toFixed(2)}%\n` +
+        `Market Cap: ${mcap} | Liquidity: ${liq} | Volume 24h: ${vol}\n` +
+        `Pair created: ${age} | DEX: ${top.dexId}\n` +
+        (twitter ? `Twitter/X: ${twitter}\n` : "") +
+        (website ? `Website: ${website}\n` : "");
+    }
+
+    // ── Security section + Score ───────────────────────────────────────────
+    let secSection = "";
+    if (sec) {
+      const honeypot   = sec.is_honeypot === "1";
+      const buyTax     = parseFloat(sec.buy_tax  || "0") * 100;
+      const sellTax    = parseFloat(sec.sell_tax || "0") * 100;
+      const mintable   = sec.is_mintable === "1";
+      const holders    = parseInt(sec.holder_count || "0");
+      const openSource = sec.is_open_source === "1";
+      const canTakeBack = sec.can_take_back_ownership === "1";
+      const ownerChange = sec.owner_change_balance === "1";
+      const blacklist  = sec.is_blacklisted === "1" || sec.transfer_pausable === "1";
+      const cooldown   = sec.trading_cooldown === "1";
+      const liqLocked  = (sec.lp_holders || []).some((lp: any) => lp.is_locked === 1);
+
+      let score = 50;
+      if (honeypot) {
+        score = 0;
+      } else {
+        if (buyTax < 5 && sellTax < 5)       score += 15;
+        else if (buyTax >= 20 || sellTax >= 20) score -= 20;
+        if (holders > 500)  score += 15;
+        else if (holders > 100) score += 10;
+        else if (holders > 50)  score += 5;
+        if (openSource)    score += 10;
+        if (!mintable)     score += 10; else score -= 10;
+        if (liqLocked)     score += 15;
+        if (canTakeBack)   score -= 15;
+        if (ownerChange)   score -= 10;
+        if (blacklist)     score -= 10;
+        if (cooldown)      score -= 5;
+        score = Math.max(0, Math.min(100, score));
+      }
+
+      const label = score >= 80 ? "Low Risk ✅" : score >= 60 ? "Moderate ⚠️" : score >= 40 ? "Caution 🔶" : "High Risk 🚨";
+
+      secSection =
+        `\nSecurity Analysis (GoPlus):\n` +
+        `${honeypot ? "🚨 HONEYPOT DETECTED — DO NOT BUY" : "✅ Not a honeypot"}\n` +
+        `${buyTax < 10 ? "✅" : "⚠️"} Buy tax: ${buyTax.toFixed(1)}% | Sell tax: ${sellTax.toFixed(1)}%\n` +
+        `${!mintable ? "✅" : "⚠️"} Mintable: ${mintable ? "Yes (owner can print tokens)" : "No"}\n` +
+        `${holders > 100 ? "✅" : "⚠️"} Holders: ${holders.toLocaleString()}\n` +
+        `${openSource ? "✅" : "⚠️"} Open source: ${openSource ? "Yes" : "No"}\n` +
+        `${liqLocked ? "✅" : "⚠️"} Liquidity locked: ${liqLocked ? "Yes" : "No"}\n` +
+        (canTakeBack ? "🚨 Owner can reclaim ownership\n" : "") +
+        (ownerChange ? "⚠️ Owner can modify holder balances\n" : "") +
+        (blacklist   ? "⚠️ Blacklist/pause function exists\n" : "") +
+        `\nBasedMind Score: ${score}/100 — ${label}`;
+    }
+
+    if (!dexSection && !secSection) return "";
+    return `\n\n[FULL TOKEN ANALYSIS]\n${dexSection}${secSection}\n`;
+  } catch {
+    return "";
+  }
+}
+
+// ── New Gem Finder — GeckoTerminal new pools (last 24h) ────────────────────
+export async function fetchNewGems(): Promise<string> {
+  try {
+    const res = await fetch(
+      "https://api.geckoterminal.com/api/v2/networks/base/new_pools?page=1",
+      { headers: { Accept: "application/json;version=20230302" }, cache: "no-store" }
+    );
+    if (!res.ok) return "";
+    const data = await res.json();
+
+    const now = Date.now();
+    const cutoff = now - 24 * 60 * 60 * 1000;
+
+    const pools = (data.data || [])
+      .filter((p: any) => new Date(p.attributes?.pool_created_at ?? 0).getTime() > cutoff)
+      .filter((p: any) => {
+        const liq = parseFloat(p.attributes?.reserve_in_usd ?? "0");
+        const vol = parseFloat(p.attributes?.volume_usd?.h24 ?? "0");
+        return liq > 5000 && vol > 1000;
+      })
+      .slice(0, 8);
+
+    if (!pools.length) return "\n\n[NEW GEM FINDER]\nNo significant new tokens found on Base in the last 24h.\n";
+
+    const lines = pools.map((p: any, i: number) => {
+      const a = p.attributes;
+      const liq  = parseFloat(a.reserve_in_usd ?? "0");
+      const vol  = parseFloat(a.volume_usd?.h24 ?? "0");
+      const ch   = parseFloat(a.price_change_percentage?.h24 ?? "0");
+      const arrow = ch >= 0 ? "▲" : "▼";
+      const hrs  = Math.round((now - new Date(a.pool_created_at).getTime()) / 36e5);
+      const addr = p.relationships?.base_token?.data?.id?.split("_")[1] ?? "";
+      return (
+        `  ${i + 1}. ${a.name} ${arrow}${Math.abs(ch).toFixed(1)}%\n` +
+        `     Liq: $${liq.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
+        `Vol 24h: $${vol.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
+        `${hrs}h old${addr ? ` | CA: ${addr}` : ""}`
+      );
+    });
+
+    return `\n\n[NEW GEM FINDER — Base, last 24h]\nFiltered: Liq > $5K, Vol > $1K\n${lines.join("\n")}\n`;
+  } catch {
+    return "";
+  }
+}
+
 // ── DEX Screener — any token by name or contract address ──────────────────
 export async function fetchDexScreener(query: string): Promise<string> {
   try {
