@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { detectCoins, fetchPrices } from "@/lib/prices";
+
+export const runtime = "edge";
 import {
   fetchDexScreener,
   fetchDefiLlama,
