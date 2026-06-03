@@ -58,7 +58,7 @@ function GeneratedImage({ src, alt }: { src: string; alt: string }) {
       />
       {status === "error" && (
         <div style={{ padding: "14px 16px", background: "#1a0808", borderRadius: 10, border: "1px solid #3a1010", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 13, color: "#f87171" }}>Pollinations is busy. Try again?</span>
+          <span style={{ fontSize: 13, color: "#f87171" }}>Image generation failed. Try again?</span>
           <button onClick={manualRetry} style={{ fontSize: 12, color: "#a78bfa", background: "transparent", border: "1px solid #a78bfa", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>
             Retry
           </button>
