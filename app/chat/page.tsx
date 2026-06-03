@@ -10,37 +10,58 @@ import Logo from "@/components/Logo";
 function GeneratedImage({ src, alt }: { src: string; alt: string }) {
   const isDataUrl = src.startsWith("data:");
   const [status, setStatus] = useState<"loading" | "loaded" | "error">(isDataUrl ? "loaded" : "loading");
+  const [retrySeed, setRetrySeed] = useState<number | null>(null);
+  const [autoRetried, setAutoRetried] = useState(false);
+
+  const imgSrc = retrySeed !== null && !isDataUrl
+    ? src.replace(/seed=\d+/, `seed=${retrySeed}`)
+    : src;
+
+  function handleError() {
+    if (!isDataUrl && !autoRetried) {
+      // Auto-retry once with a new seed after 2s
+      setAutoRetried(true);
+      setStatus("loading");
+      setTimeout(() => setRetrySeed(Math.floor(Math.random() * 999999)), 2000);
+    } else {
+      setStatus("error");
+    }
+  }
+
+  function manualRetry() {
+    setStatus("loading");
+    setAutoRetried(false);
+    setRetrySeed(Math.floor(Math.random() * 999999));
+  }
+
   return (
     <div style={{ margin: "12px 0" }}>
       {status === "loading" && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "14px 18px", background: "#0f0f1a", borderRadius: 12,
-          border: "1px solid #1f1f2e",
-        }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", background: "#0f0f1a", borderRadius: 12, border: "1px solid #1f1f2e" }}>
           <div style={{ display: "flex", gap: 5 }}>
             {[0,1,2].map(i => (
               <div key={i} className="dot" style={{ width: 7, height: 7, borderRadius: "50%", background: "#6c63ff", animationDelay: `${i*0.2}s` }} />
             ))}
           </div>
-          <span style={{ fontSize: 13, color: "#555" }}>Generating image — this may take ~10 seconds...</span>
+          <span style={{ fontSize: 13, color: "#555" }}>
+            {autoRetried ? "Retrying with new seed…" : "Generating image — this may take ~15 seconds…"}
+          </span>
         </div>
       )}
       <img
-        src={src}
+        key={retrySeed ?? "orig"}
+        src={imgSrc}
         alt={alt}
-        style={{
-          display: status === "loaded" ? "block" : "none",
-          maxWidth: "100%", width: "100%", maxHeight: 500,
-          objectFit: "contain", borderRadius: 14,
-          border: "1px solid #252535", background: "#0f0f1a",
-        }}
+        style={{ display: status === "loaded" ? "block" : "none", maxWidth: "100%", width: "100%", maxHeight: 500, objectFit: "contain", borderRadius: 14, border: "1px solid #252535", background: "#0f0f1a" }}
         onLoad={() => setStatus("loaded")}
-        onError={() => setStatus("error")}
+        onError={handleError}
       />
       {status === "error" && (
-        <div style={{ padding: "12px 16px", background: "#1a0808", borderRadius: 10, border: "1px solid #3a1010", fontSize: 13, color: "#f87171" }}>
-          Image generation failed. Please try again.
+        <div style={{ padding: "14px 16px", background: "#1a0808", borderRadius: 10, border: "1px solid #3a1010", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 13, color: "#f87171" }}>Pollinations is busy. Try again?</span>
+          <button onClick={manualRetry} style={{ fontSize: 12, color: "#a78bfa", background: "transparent", border: "1px solid #a78bfa", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>
+            Retry
+          </button>
         </div>
       )}
     </div>

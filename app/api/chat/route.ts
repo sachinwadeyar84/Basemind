@@ -262,9 +262,9 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Fallback: Pollinations turbo (~10-15s, client-side load)
+      // Fallback: Pollinations default model (more stable than turbo)
       if (!imageUrl) {
-        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}&model=turbo`;
+        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=768&height=768&nologo=true&seed=${seed}&enhance=true`;
       }
 
       const reply = `![${prompt}](${imageUrl})\n\n**Prompt used:** ${prompt}\n\nAsk for a variation: *"anime style"*, *"realistic"*, *"pixel art"*, *"cyberpunk"*, *"watercolor"*`;
