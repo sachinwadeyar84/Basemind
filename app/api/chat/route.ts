@@ -177,9 +177,13 @@ function findPreviousImagePrompt(messages: Array<{role: string; content: string}
 function isVariationRequest(text: string): boolean {
   const t = text.trim();
   const words = t.split(/\s+/).length;
+  // Creation verbs at the start = new image request, never a variation
+  if (/^(create|generate|make|draw|paint|render|illustrate|show|get|give|produce)\b/i.test(t)) return false;
+  // Long messages are new requests, not style tweaks
+  if (words >= 8) return false;
   const isStyleWord = /^(anime|realistic|pixel art|cyberpunk|watercolor|3d|cartoon|sketch|neon|retro|minimalist|oil paint|dark|light|colorful|black and white|vintage|futuristic|ghibli|fantasy|sci-fi)(\s+style)?$/i.test(t);
   const hasVariationWord = /\b(another|new|different|again|variation|redo|retry|same|more|style|anime|realistic|pixel art|cyberpunk|watercolor|3d|cartoon|sketch|neon|retro|minimalist)\b/i.test(t);
-  return (isStyleWord || hasVariationWord) && words < 10;
+  return isStyleWord || hasVariationWord;
 }
 
 export async function POST(req: NextRequest) {
@@ -221,12 +225,16 @@ export async function POST(req: NextRequest) {
     if (shouldGenImage) {
       let prompt = extractImagePrompt(lastUserMsg);
 
-      // Variation request: reuse previous prompt + apply style modifier
-      if (!prompt || isVariationRequest(lastUserMsg)) {
+      // Variation request: only override prompt when nothing meaningful was extracted
+      const isVariation = isVariationRequest(lastUserMsg);
+      if (isVariation || !prompt) {
         const prevPrompt = findPreviousImagePrompt(messages);
-        if (prevPrompt) {
+        if (prevPrompt && (!prompt || isVariation)) {
           const styleMatch = lastUserMsg.match(/\b(anime|realistic|pixel art|cyberpunk|watercolor|3d|cartoon|sketch|oil paint|neon|minimalist|retro)\b/i);
-          prompt = styleMatch ? `${prevPrompt}, ${styleMatch[0]} style` : prevPrompt;
+          // Only use prevPrompt if no real new prompt was extracted
+          if (!prompt || prompt.split(" ").length <= 3) {
+            prompt = styleMatch ? `${prevPrompt}, ${styleMatch[0]} style` : prevPrompt;
+          }
         }
       }
       if (!prompt) prompt = lastUserMsg.replace(/[?.!]/g, "").trim();
