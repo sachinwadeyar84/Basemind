@@ -7,31 +7,38 @@ import { Send, Plus, MessageSquare, Trash2, Copy, Check, Menu } from "lucide-rea
 import Link from "next/link";
 import Logo from "@/components/Logo";
 
+const POLL_MODELS = ["flux", "turbo", "flux-realism", "flux-anime"];
+
+function buildRetryUrl(src: string, attempt: number): string {
+  const seed = Math.floor(Math.random() * 999999);
+  const model = POLL_MODELS[attempt % POLL_MODELS.length];
+  // Strip any existing seed/model params then re-add
+  const base = src.split("?")[0];
+  return `${base}?width=512&height=512&seed=${seed}&model=${model}`;
+}
+
 function GeneratedImage({ src, alt }: { src: string; alt: string }) {
   const isDataUrl = src.startsWith("data:");
   const [status, setStatus] = useState<"loading" | "loaded" | "error">(isDataUrl ? "loaded" : "loading");
-  const [retrySeed, setRetrySeed] = useState<number | null>(null);
-  const [autoRetried, setAutoRetried] = useState(false);
+  const [retryUrl, setRetryUrl] = useState<string | null>(null);
+  const retryAttempt = useRef(0);
 
-  const imgSrc = retrySeed !== null && !isDataUrl
-    ? src.replace(/seed=\d+/, `seed=${retrySeed}`)
-    : src;
+  const imgSrc = retryUrl ?? src;
 
   function handleError() {
-    if (!isDataUrl && !autoRetried) {
-      // Auto-retry once with a new seed after 2s
-      setAutoRetried(true);
+    if (!isDataUrl && retryAttempt.current < 2) {
+      retryAttempt.current += 1;
       setStatus("loading");
-      setTimeout(() => setRetrySeed(Math.floor(Math.random() * 999999)), 2000);
+      setTimeout(() => setRetryUrl(buildRetryUrl(src, retryAttempt.current)), 1500);
     } else {
       setStatus("error");
     }
   }
 
   function manualRetry() {
+    retryAttempt.current = 0;
     setStatus("loading");
-    setAutoRetried(false);
-    setRetrySeed(Math.floor(Math.random() * 999999));
+    setRetryUrl(buildRetryUrl(src, 0));
   }
 
   return (
@@ -44,12 +51,12 @@ function GeneratedImage({ src, alt }: { src: string; alt: string }) {
             ))}
           </div>
           <span style={{ fontSize: 13, color: "#555" }}>
-            {autoRetried ? "Retrying with new seed…" : "Generating image…"}
+            {retryAttempt.current > 0 ? `Retrying (attempt ${retryAttempt.current})…` : "Generating image…"}
           </span>
         </div>
       )}
       <img
-        key={retrySeed ?? "orig"}
+        key={retryUrl ?? "orig"}
         src={imgSrc}
         alt={alt}
         style={{ display: status === "loaded" ? "block" : "none", maxWidth: "100%", width: "100%", maxHeight: 500, objectFit: "contain", borderRadius: 14, border: "1px solid #252535", background: "#0f0f1a" }}

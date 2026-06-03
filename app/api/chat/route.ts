@@ -242,8 +242,8 @@ export async function POST(req: NextRequest) {
       const styledPrompt = `${prompt}, digital art, vibrant colors, high quality, 4k`;
       const seed = Math.floor(Math.random() * 999999);
 
-      // Pollinations turbo — server just builds the URL, browser loads it (no edge timeout risk)
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}&model=turbo`;
+      // Pollinations — server builds URL instantly, browser loads it (no edge timeout risk)
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&seed=${seed}`;
 
       const reply = `![${prompt}](${imageUrl})\n\n**Prompt used:** ${prompt}\n\nAsk for a variation: *"anime style"*, *"realistic"*, *"pixel art"*, *"cyberpunk"*, *"watercolor"*`;
       const readable = new ReadableStream({
