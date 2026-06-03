@@ -59,6 +59,107 @@ interface Conversation {
   createdAt: number;
 }
 
+// ── Usage / payment config ────────────────────────────────────────────────
+const FREE_LIMIT   = 20;
+const PAID_PACK    = 50;   // messages per payment
+const USDC_BASE    = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const PAY_WALLET   = process.env.NEXT_PUBLIC_PAYMENT_WALLET ?? "";
+const PAY_AMOUNT   = 10000; // 0.01 USDC (6 decimals)
+
+interface UsageData { date: string; freeCount: number; paidCredits: number }
+
+function getUsage(): UsageData {
+  if (typeof window === "undefined") return { date: "", freeCount: 0, paidCredits: 0 };
+  const today = new Date().toDateString();
+  try {
+    const raw = localStorage.getItem("bmind_usage");
+    if (!raw) return { date: today, freeCount: 0, paidCredits: 0 };
+    const d: UsageData = JSON.parse(raw);
+    // Reset free count daily, keep paid credits
+    return d.date === today ? d : { date: today, freeCount: 0, paidCredits: d.paidCredits ?? 0 };
+  } catch { return { date: today, freeCount: 0, paidCredits: 0 }; }
+}
+
+function saveUsage(d: UsageData) { localStorage.setItem("bmind_usage", JSON.stringify(d)); }
+
+function incrementUsage() {
+  const u = getUsage();
+  if (u.freeCount < FREE_LIMIT) saveUsage({ ...u, freeCount: u.freeCount + 1 });
+  else saveUsage({ ...u, paidCredits: Math.max(0, u.paidCredits - 1) });
+}
+
+async function payWithWallet(): Promise<string> {
+  const eth = (window as any).ethereum;
+  if (!eth) throw new Error("NO_WALLET");
+  const [from] = await eth.request({ method: "eth_requestAccounts" });
+  // Switch to Base (chainId 8453 = 0x2105)
+  try {
+    await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x2105" }] });
+  } catch (e: any) {
+    if (e.code === 4902) {
+      await eth.request({
+        method: "wallet_addEthereumChain",
+        params: [{ chainId: "0x2105", chainName: "Base", nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 }, rpcUrls: ["https://mainnet.base.org"], blockExplorerUrls: ["https://basescan.org"] }],
+      });
+    } else throw e;
+  }
+  // ERC-20 transfer(address,uint256)
+  const data = "0xa9059cbb" + PAY_WALLET.slice(2).padStart(64, "0") + PAY_AMOUNT.toString(16).padStart(64, "0");
+  const txHash: string = await eth.request({
+    method: "eth_sendTransaction",
+    params: [{ from, to: USDC_BASE, data, chainId: "0x2105" }],
+  });
+  return txHash;
+}
+
+// ── Payment modal ──────────────────────────────────────────────────────────
+function PaymentModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [status, setStatus] = useState<"idle" | "paying" | "done" | "err">("idle");
+  const [errMsg, setErrMsg] = useState("");
+
+  async function handlePay() {
+    setStatus("paying"); setErrMsg("");
+    try {
+      await payWithWallet();
+      const u = getUsage();
+      saveUsage({ ...u, paidCredits: u.paidCredits + PAID_PACK });
+      setStatus("done");
+      setTimeout(() => { onSuccess(); onClose(); }, 1800);
+    } catch (e: any) {
+      setErrMsg(e.message === "NO_WALLET" ? "No wallet detected. Install MetaMask or Coinbase Wallet." : "Payment cancelled or failed. Please try again.");
+      setStatus("err");
+    }
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "#111", border: "1px solid #252535", borderRadius: 18, padding: 28, maxWidth: 370, width: "100%" }}>
+        <div style={{ fontSize: 28, textAlign: "center", marginBottom: 10 }}>🔒</div>
+        <h2 style={{ color: "#fff", fontWeight: 700, fontSize: 18, textAlign: "center", marginBottom: 6 }}>Daily limit reached</h2>
+        <p style={{ color: "#888", fontSize: 13, textAlign: "center", marginBottom: 20 }}>
+          You've used your <strong style={{ color: "#fff" }}>20 free messages</strong> today.<br />
+          Unlock <strong style={{ color: "#a78bfa" }}>{PAID_PACK} more messages</strong> for just <strong style={{ color: "#a78bfa" }}>0.01 USDC</strong>.
+        </p>
+        <div style={{ background: "#0d0d1a", borderRadius: 12, padding: "14px 16px", marginBottom: 18, border: "1px solid #1e1e3a" }}>
+          {[["Price", "0.01 USDC"], ["Messages unlocked", `${PAID_PACK} messages`], ["Network", "Base (fast + cheap)"]].map(([k, v]) => (
+            <div key={k} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ color: "#555", fontSize: 13 }}>{k}</span>
+              <span style={{ color: k === "Network" ? "#6c63ff" : "#fff", fontWeight: 600, fontSize: 13 }}>{v}</span>
+            </div>
+          ))}
+        </div>
+        {status === "done" && <div style={{ background: "#0a1a0a", border: "1px solid #1a3a1a", borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: "#4ade80", textAlign: "center" }}>✅ Payment confirmed! {PAID_PACK} messages added.</div>}
+        {status === "err" && <div style={{ background: "#1a0808", border: "1px solid #3a1010", borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: "#f87171" }}>{errMsg}</div>}
+        <button onClick={handlePay} disabled={status === "paying" || status === "done"} style={{ width: "100%", padding: "13px 0", borderRadius: 10, border: "none", background: status === "done" ? "#16a34a" : "linear-gradient(135deg,#6c63ff,#a78bfa)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", opacity: status === "paying" ? 0.7 : 1, marginBottom: 10 }}>
+          {status === "paying" ? "Confirm in your wallet…" : status === "done" ? "✅ Done!" : "Pay 0.01 USDC with Wallet"}
+        </button>
+        <button onClick={onClose} style={{ width: "100%", padding: "10px 0", borderRadius: 10, border: "1px solid #252535", background: "transparent", color: "#555", fontSize: 14, cursor: "pointer" }}>Cancel</button>
+        <p style={{ color: "#333", fontSize: 11, textAlign: "center", marginTop: 12 }}>Supports $BMIND · Powered by Base</p>
+      </div>
+    </div>
+  );
+}
+
 const SUGGESTIONS = [
   "What is the Base blockchain?",
   "Generate image of a crypto bull riding a rocket",
@@ -78,6 +179,8 @@ export default function Home() {
   const [copied, setCopied] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [usage, setUsage] = useState<UsageData>({ date: "", freeCount: 0, paidCredits: 0 });
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -92,6 +195,9 @@ export default function Home() {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Load usage on mount
+  useEffect(() => { setUsage(getUsage()); }, []);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -154,6 +260,13 @@ export default function Home() {
     const msg = (text ?? input).trim();
     if (!msg || loading) return;
 
+    // Check usage limit
+    const cur = getUsage();
+    if (cur.freeCount >= FREE_LIMIT && cur.paidCredits <= 0) {
+      setShowPayModal(true);
+      return;
+    }
+
     let currentId = activeId;
 
     // Create new conversation if none active
@@ -197,6 +310,8 @@ export default function Home() {
     } catch {
       updateConvo(currentId, [...newMessages, { role: "assistant", content: "Something went wrong. Please try again." }]);
     } finally {
+      incrementUsage();
+      setUsage(getUsage());
       setLoading(false);
       inputRef.current?.focus();
     }
@@ -521,14 +636,30 @@ export default function Home() {
                 }}
               ><Send size={15} /></button>
             </div>
-            {!isMobile && (
-              <p style={{ textAlign: "center", fontSize: 11, color: "#2a2a2a", marginTop: 6 }}>
-                BasedMind can make mistakes. Powered by $BMIND on Base.
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6, paddingLeft: 4, paddingRight: 4 }}>
+              <p style={{ fontSize: 11, color: "#2a2a2a" }}>
+                {isMobile ? "" : "BasedMind can make mistakes. Powered by $BMIND on Base."}
               </p>
-            )}
+              <button
+                onClick={() => { if (usage.freeCount >= FREE_LIMIT && usage.paidCredits <= 0) setShowPayModal(true); }}
+                style={{ fontSize: 11, color: usage.freeCount >= FREE_LIMIT && usage.paidCredits <= 0 ? "#a78bfa" : "#333", background: "transparent", border: "none", cursor: usage.freeCount >= FREE_LIMIT ? "pointer" : "default", whiteSpace: "nowrap" }}
+              >
+                {usage.paidCredits > 0
+                  ? `${usage.paidCredits} paid msgs left`
+                  : usage.freeCount >= FREE_LIMIT
+                    ? "⚡ Upgrade"
+                    : `${FREE_LIMIT - usage.freeCount}/${FREE_LIMIT} free left`}
+              </button>
+            </div>
           </div>
         </div>
       </div>
+      {showPayModal && (
+        <PaymentModal
+          onClose={() => setShowPayModal(false)}
+          onSuccess={() => setUsage(getUsage())}
+        />
+      )}
 
       <style>{`
         div:hover .delete-btn { opacity: 1 !important; }
