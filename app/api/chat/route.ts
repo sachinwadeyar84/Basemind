@@ -242,50 +242,8 @@ export async function POST(req: NextRequest) {
       const styledPrompt = `${prompt}, digital art, vibrant colors, high quality, 4k`;
       const seed = Math.floor(Math.random() * 999999);
 
-      // Try Hugging Face — multiple models with progressive timeouts
-      let imageUrl: string | null = null;
-      const hfKey = process.env.HUGGINGFACE_API_KEY;
-      if (hfKey) {
-        const hfModels = [
-          { id: "black-forest-labs/FLUX.1-schnell", timeout: 20000 },
-          { id: "stabilityai/sdxl-turbo",           timeout: 12000 },
-        ];
-        for (const { id, timeout } of hfModels) {
-          try {
-            const hfRes = await fetch(
-              `https://api-inference.huggingface.co/models/${id}`,
-              {
-                method: "POST",
-                headers: { Authorization: `Bearer ${hfKey}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ inputs: styledPrompt, parameters: { width: 512, height: 512 } }),
-                signal: AbortSignal.timeout(timeout),
-              }
-            );
-            if (hfRes.ok) {
-              const contentType = hfRes.headers.get("content-type") ?? "";
-              if (contentType.startsWith("image/")) {
-                const buf = await hfRes.arrayBuffer();
-                const bytes = new Uint8Array(buf);
-                let binary = "";
-                const chunk = 8192;
-                for (let i = 0; i < bytes.byteLength; i += chunk) {
-                  binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-                }
-                const b64 = btoa(binary);
-                imageUrl = `data:${contentType};base64,${b64}`;
-                break;
-              }
-            }
-          } catch {
-            // try next model
-          }
-        }
-      }
-
-      // Fallback: Pollinations.ai (client-side load, no server timeout)
-      if (!imageUrl) {
-        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}&model=flux`;
-      }
+      // Pollinations turbo — server just builds the URL, browser loads it (no edge timeout risk)
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(styledPrompt)}?width=512&height=512&nologo=true&seed=${seed}&model=turbo`;
 
       const reply = `![${prompt}](${imageUrl})\n\n**Prompt used:** ${prompt}\n\nAsk for a variation: *"anime style"*, *"realistic"*, *"pixel art"*, *"cyberpunk"*, *"watercolor"*`;
       const readable = new ReadableStream({

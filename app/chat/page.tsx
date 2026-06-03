@@ -44,7 +44,7 @@ function GeneratedImage({ src, alt }: { src: string; alt: string }) {
             ))}
           </div>
           <span style={{ fontSize: 13, color: "#555" }}>
-            {autoRetried ? "Retrying with new seed…" : "Generating image — this may take ~15 seconds…"}
+            {autoRetried ? "Retrying with new seed…" : "Generating image…"}
           </span>
         </div>
       )}
