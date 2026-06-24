@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useEffect } from "react";
+import Logo from "@/components/Logo";
 
 const FEATURES = [
   { icon: "📈", title: "Live Token Prices", desc: "Real-time prices for any coin — Bitcoin, ETH, meme coins — straight from CoinGecko." },
@@ -44,9 +44,7 @@ export default function LandingPage() {
         borderBottom: "1px solid rgba(255,255,255,0.04)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
-            <Image src="/logo.png" alt="SolAI" width={36} height={36} style={{ width: "100%", height: "100%", objectFit: "cover" }} priority />
-          </div>
+          <Logo size={36} />
           <span style={{ fontWeight: 800, fontSize: 16, color: "#fff", letterSpacing: "-0.3px" }}>SolAI</span>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -85,21 +83,10 @@ export default function LandingPage() {
 
         {/* Logo */}
         <div style={{
-          width: isMobile ? 150 : 200, height: isMobile ? 150 : 200,
-          borderRadius: isMobile ? 28 : 36,
-          overflow: "hidden",
-          marginBottom: 36,
-          boxShadow: "0 0 0 1px rgba(33,150,243,0.2), 0 20px 80px rgba(29,111,216,0.35)",
-          position: "relative", zIndex: 1,
+          marginBottom: 36, position: "relative", zIndex: 1,
+          filter: "drop-shadow(0 0 40px rgba(153,69,255,0.4)) drop-shadow(0 0 80px rgba(20,241,149,0.15))",
         }}>
-          <Image
-            src="/logo.png"
-            alt="SolAI Logo"
-            width={200}
-            height={200}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            priority
-          />
+          <Logo size={isMobile ? 120 : 160} />
         </div>
 
         {/* Tag */}
@@ -274,8 +261,8 @@ export default function LandingPage() {
             pointerEvents: "none",
           }} />
 
-          <div style={{ width: 72, height: 72, borderRadius: 18, overflow: "hidden", margin: "0 auto 20px" }}>
-            <Image src="/logo.png" alt="$BMIND" width={72} height={72} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+            <Logo size={72} />
           </div>
 
           <div style={{
@@ -333,9 +320,7 @@ export default function LandingPage() {
         flexWrap: "wrap", gap: 12,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, overflow: "hidden" }}>
-            <Image src="/logo.png" alt="SolAI" width={28} height={28} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          </div>
+          <Logo size={28} />
           <span style={{ fontSize: 13, color: "#1f2937" }}>
             SolAI · $SMAI on Solana · AI for Crypto
           </span>
