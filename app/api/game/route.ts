@@ -23,7 +23,7 @@ export async function GET() {
         return { name, price, volume24h, priceChange24h };
       })
       .filter((t) => t.price > 0 && t.name.length > 0)
-      .slice(0, 3);
+      .slice(0, 5);
 
     return NextResponse.json({ tokens });
   } catch {
