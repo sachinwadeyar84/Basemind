@@ -110,7 +110,7 @@ export default function LandingPage() {
           fontSize: 12, color: "#60a5fa", letterSpacing: "0.5px", marginBottom: 22,
         }}>
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22d3ee", display: "inline-block" }} />
-          AI FOR BASE CRYPTO · $BMIND
+          AI FOR SOLANA · $SMAI
         </div>
 
         {/* Headline */}
@@ -284,7 +284,7 @@ export default function LandingPage() {
             borderRadius: 99, fontSize: 11.5, color: "#60a5fa",
             marginBottom: 20, letterSpacing: "1px",
           }}>
-            $BMIND · BASE BLOCKCHAIN
+            $SMAI · SOLANA BLOCKCHAIN
           </div>
 
           <h2 style={{ fontSize: isMobile ? 24 : 30, fontWeight: 800, marginBottom: 14, letterSpacing: "-0.5px" }}>
@@ -337,7 +337,7 @@ export default function LandingPage() {
             <Image src="/logo.png" alt="SolAI" width={28} height={28} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
           <span style={{ fontSize: 13, color: "#1f2937" }}>
-            SolAI · $BMIND on Solana · AI for Crypto
+            SolAI · $SMAI on Solana · AI for Crypto
           </span>
         </div>
         <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
