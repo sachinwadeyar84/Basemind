@@ -34,7 +34,7 @@ export async function fetchFullTokenAnalysis(address: string): Promise<string> {
         `Price: $${top.priceUsd} | 24h: ${arrow}${Math.abs(Number(change24h)).toFixed(2)}%\n` +
         `Market Cap: ${mcap} | Liquidity: ${liq} | Volume 24h: ${vol}\n` +
         `Pair created: ${age} | DEX: ${top.dexId}\n` +
-        (twitter ? `Twitter/X: ${twitter}\n` : "") +
+        (twitter ? `Twitter/X (from DEX Screener registry): ${twitter}\n` : "") +
         (website ? `Website: ${website}\n` : "") +
         `DEX Screener: ${dexLink}\n`;
     }
