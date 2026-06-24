@@ -299,6 +299,92 @@ export async function fetchTrending(): Promise<string> {
   }
 }
 
+// ── Twitter / X KOL Analyzer ──────────────────────────────────────────────
+export function extractTwitterHandle(text: string): string | null {
+  const urlMatch = text.match(/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]{1,15})/i);
+  if (urlMatch) return urlMatch[1];
+  const handleMatch = text.match(/(?:^|\s)@([a-zA-Z0-9_]{1,15})(?:\s|$)/);
+  if (handleMatch) return handleMatch[1];
+  return null;
+}
+
+export async function fetchTwitterKOL(username: string): Promise<string> {
+  try {
+    const token = process.env.TWITTER_BEARER_TOKEN;
+    if (!token) return "";
+
+    const userRes = await fetch(
+      `https://api.twitter.com/2/users/by/username/${username}?user.fields=public_metrics,description,verified,created_at`,
+      { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
+    );
+    if (!userRes.ok) return "";
+    const userData = await userRes.json();
+    const user = userData.data;
+    if (!user) return "";
+
+    const m = user.public_metrics;
+    const followers  = m.followers_count  ?? 0;
+    const following  = m.following_count  ?? 0;
+    const tweetCount = m.tweet_count      ?? 0;
+    const listed     = m.listed_count     ?? 0;
+    const ageYears   = Math.floor((Date.now() - new Date(user.created_at).getTime()) / (365.25 * 24 * 3600 * 1000));
+    const ratio      = following > 0 ? followers / following : followers;
+
+    // Fetch last 10 tweets for engagement rate
+    let avgLikes = 0, avgRTs = 0;
+    const tweetsRes = await fetch(
+      `https://api.twitter.com/2/users/${user.id}/tweets?max_results=10&tweet.fields=public_metrics`,
+      { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
+    );
+    if (tweetsRes.ok) {
+      const td = await tweetsRes.json();
+      const recent: any[] = td.data ?? [];
+      if (recent.length) {
+        avgLikes = recent.reduce((s, t) => s + (t.public_metrics?.like_count ?? 0), 0) / recent.length;
+        avgRTs   = recent.reduce((s, t) => s + (t.public_metrics?.retweet_count ?? 0), 0) / recent.length;
+      }
+    }
+
+    const engRate = followers > 0 ? ((avgLikes + avgRTs) / followers) * 100 : 0;
+
+    // ── KOL Score (0–100) ──────────────────────────────────────────────────
+    let score = 0;
+    // Followers (0–30)
+    score += followers >= 1_000_000 ? 30 : followers >= 500_000 ? 25 : followers >= 100_000 ? 20 : followers >= 50_000 ? 15 : followers >= 10_000 ? 10 : followers >= 1_000 ? 5 : 0;
+    // Engagement rate (0–25)
+    score += engRate >= 5 ? 25 : engRate >= 2 ? 20 : engRate >= 1 ? 15 : engRate >= 0.5 ? 10 : engRate >= 0.1 ? 5 : 0;
+    // Account age (0–15)
+    score += ageYears >= 3 ? 15 : ageYears >= 2 ? 10 : ageYears >= 1 ? 5 : 0;
+    // Follower ratio (0–15)
+    score += ratio >= 10 ? 15 : ratio >= 5 ? 10 : ratio >= 2 ? 5 : 0;
+    // Verified (0–10)
+    if (user.verified) score += 10;
+    // Listed count (0–5)
+    score += listed >= 1000 ? 5 : listed >= 100 ? 3 : 0;
+    score = Math.min(100, score);
+
+    const tier =
+      score >= 80 ? "🐋 Major KOL" :
+      score >= 60 ? "⭐ Strong KOL" :
+      score >= 40 ? "📈 Mid-tier KOL" :
+      score >= 20 ? "🌱 Micro KOL" : "👤 Regular User";
+
+    return (
+      `\n\n[TWITTER KOL ANALYSIS]\n` +
+      `Account: @${user.username} — ${user.name}\n` +
+      `Bio: ${user.description || "—"}\n` +
+      `Followers: ${followers.toLocaleString()} | Following: ${following.toLocaleString()} | Ratio: ${ratio.toFixed(1)}:1\n` +
+      `Tweets: ${tweetCount.toLocaleString()} | Listed on: ${listed.toLocaleString()} lists\n` +
+      `Account age: ${ageYears} year${ageYears !== 1 ? "s" : ""} | Verified: ${user.verified ? "✅" : "❌"}\n` +
+      `Avg likes/tweet: ${Math.round(avgLikes)} | Avg RTs/tweet: ${Math.round(avgRTs)}\n` +
+      `Engagement rate: ${engRate.toFixed(2)}%\n` +
+      `\nSolAI KOL Score: ${score}/100 — ${tier}\n`
+    );
+  } catch {
+    return "";
+  }
+}
+
 // ── Crypto News (CryptoCompare — no key) ──────────────────────────────────
 export async function fetchCryptoNews(keyword?: string): Promise<string> {
   try {

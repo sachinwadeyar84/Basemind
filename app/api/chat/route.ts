@@ -11,6 +11,8 @@ import {
   fetchCryptoNews,
   fetchFullTokenAnalysis,
   fetchNewGems,
+  fetchTwitterKOL,
+  extractTwitterHandle,
 } from "@/lib/integrations";
 
 
@@ -66,6 +68,7 @@ When the user message contains any of these blocks, use the exact data in your a
 - \`[LATEST CRYPTO NEWS]\` — recent headlines. Summarize and give your take on implications.
 - \`[FULL TOKEN ANALYSIS]\` — DEX data + GoPlus security scan + SolAI Score. Present all data clearly. Render the DEX Screener URL as a clickable link: [View on DEX Screener](url). Explain the score. Warn strongly if mint/freeze authority is active. Always remind the user to DYOR.
 - \`[NEW GEM FINDER — Solana]\` — new tokens on Solana launched in the last 24h, filtered for liquidity and volume. Analyze each one, highlight the most promising, warn about risks. Remind users these are very early and high risk.
+- \`[TWITTER KOL ANALYSIS]\` — full Twitter/X account analysis with KOL Score 0–100. Explain the score, highlight engagement rate, follower ratio, and whether they are trustworthy in the Solana community. Warn if account is new or has low engagement despite high followers (bought followers red flag).
 
 Never say "I don't have real-time data" when any of the above blocks are present in the message.
 
@@ -135,6 +138,7 @@ function detectQueryTypes(text: string) {
     isGas:       /\bgas\b|gwei|gas fee|gas price|transaction fee|how much to send|cost to transact|sol fee|solana fee|priority fee/i.test(t),
     isTrending:  /trending|pumping|hot coin|what.s hot|top gainer|movers|popular coin|what.s moving/i.test(t),
     isNews:      /news|latest|what.s happening|update|today in crypto|recent|announced|just happened/i.test(t),
+    isTwitter:   /twitter\.com\/\w+|x\.com\/\w+/.test(text) || (/@[a-zA-Z0-9_]{1,15}/.test(text) && /kol|influencer|check|analyze|follower|score|twitter|account|who is/i.test(t)),
     isImageGen:  (
                    // Image/art noun + any action verb
                    /\b(image|picture|photo|artwork|illustration|wallpaper|meme|banner|logo|painting|portrait|landscape|scene|poster|avatar|icon|art)\b/i.test(t)
@@ -226,6 +230,10 @@ export async function POST(req: NextRequest) {
       fetches.push(fetchDexScreener(lastUserMsg));
     }
     if (types.isNewGems) fetches.push(fetchNewGems());
+    if (types.isTwitter) {
+      const handle = extractTwitterHandle(lastUserMsg);
+      if (handle) fetches.push(fetchTwitterKOL(handle));
+    }
     if (types.isDefi)      fetches.push(fetchDefiLlama());
     if (types.isFearGreed) fetches.push(fetchFearGreed());
     if (types.isGas)       fetches.push(fetchGasPrice());
