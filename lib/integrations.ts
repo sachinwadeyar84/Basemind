@@ -70,7 +70,7 @@ export async function fetchFullTokenAnalysis(address: string): Promise<string> {
         `${holders > 100 ? "✅" : "⚠️"} Holders: ${holders.toLocaleString()}\n` +
         `${liqLocked ? "✅" : "⚠️"} Liquidity locked: ${liqLocked ? "Yes" : "No/Unknown"}\n` +
         (topHolder > 0 ? `${topHolder < 30 ? "✅" : "⚠️"} Top 10 holder concentration: ${topHolder.toFixed(1)}%\n` : "") +
-        `\nBasedMind Score: ${score}/100 — ${label}`;
+        `\nSolAI Score: ${score}/100 — ${label}`;
     }
 
     if (!dexSection && !secSection) return "";

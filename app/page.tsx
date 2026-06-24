@@ -45,9 +45,9 @@ export default function LandingPage() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
-            <Image src="/logo.png" alt="BasedMind" width={36} height={36} style={{ width: "100%", height: "100%", objectFit: "cover" }} priority />
+            <Image src="/logo.png" alt="SolAI" width={36} height={36} style={{ width: "100%", height: "100%", objectFit: "cover" }} priority />
           </div>
-          <span style={{ fontWeight: 800, fontSize: 16, color: "#fff", letterSpacing: "-0.3px" }}>BasedMind</span>
+          <span style={{ fontWeight: 800, fontSize: 16, color: "#fff", letterSpacing: "-0.3px" }}>SolAI</span>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           {!isMobile && (
@@ -94,7 +94,7 @@ export default function LandingPage() {
         }}>
           <Image
             src="/logo.png"
-            alt="BasedMind Logo"
+            alt="SolAI Logo"
             width={200}
             height={200}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -239,7 +239,7 @@ export default function LandingPage() {
         }}>
           {[
             { step: "01", title: "Ask anything", desc: "Type any question — a price, a contract address, market sentiment, gas fees, or just \"what's trending?\"" },
-            { step: "02", title: "Live data fetched", desc: "BasedMind automatically detects what data you need and fetches it from 8+ live APIs in real time." },
+            { step: "02", title: "Live data fetched", desc: "SolAI automatically detects what data you need and fetches it from 8+ live APIs in real time." },
             { step: "03", title: "Smart AI answer", desc: "You get a clear, accurate response with real numbers — not outdated training data." },
           ].map(item => (
             <div key={item.step} style={{
@@ -291,7 +291,7 @@ export default function LandingPage() {
             The Token Behind the AI
           </h2>
           <p style={{ color: "#4b5563", fontSize: 15, lineHeight: 1.8, marginBottom: 36 }}>
-            BasedMind is an AI-powered meme coin on the Base blockchain.
+            SolAI is an AI-powered meme coin on the Base blockchain.
             This app <strong style={{ color: "#9ca3af" }}>is</strong> the product — the AI is the utility.
             Built on Coinbase&apos;s Base L2 with EVM compatibility and gas fees under $0.01.
           </p>
@@ -320,7 +320,7 @@ export default function LandingPage() {
             fontSize: 16, textDecoration: "none", display: "inline-block",
             boxShadow: "0 6px 30px rgba(33,150,243,0.35)",
           }}>
-            Launch BasedMind AI →
+            Launch SolAI AI →
           </Link>
         </div>
       </section>
@@ -334,10 +334,10 @@ export default function LandingPage() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, overflow: "hidden" }}>
-            <Image src="/logo.png" alt="BasedMind" width={28} height={28} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <Image src="/logo.png" alt="SolAI" width={28} height={28} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
           <span style={{ fontSize: 13, color: "#1f2937" }}>
-            BasedMind · $BMIND on Solana · AI for Crypto
+            SolAI · $BMIND on Solana · AI for Crypto
           </span>
         </div>
         <div style={{ display: "flex", gap: 20, alignItems: "center" }}>

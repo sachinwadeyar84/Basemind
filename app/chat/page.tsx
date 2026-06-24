@@ -414,7 +414,7 @@ export default function Home() {
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "4px 4px 14px", borderBottom: "1px solid #1f1f1f", marginBottom: 10 }}>
             <Logo size={30} />
-            <span style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>BasedMind</span>
+            <span style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>SolAI</span>
           </div>
 
           {/* New chat button */}
@@ -524,7 +524,7 @@ export default function Home() {
           {/* Center: logo + name */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Logo size={24} />
-            <span style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>BasedMind</span>
+            <span style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>SolAI</span>
           </div>
 
           {/* New chat button */}
@@ -641,7 +641,7 @@ export default function Home() {
               <textarea
                 ref={inputRef}
                 rows={1}
-                placeholder="Message BasedMind..."
+                placeholder="Message SolAI..."
                 value={input}
                 onChange={e => {
                   setInput(e.target.value);
@@ -670,7 +670,7 @@ export default function Home() {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6, paddingLeft: 4, paddingRight: 4 }}>
               <p style={{ fontSize: 11, color: "#2a2a2a" }}>
-                {isMobile ? "" : "BasedMind can make mistakes. Powered by $BMIND on Solana."}
+                {isMobile ? "" : "SolAI can make mistakes. Powered by $BMIND on Solana."}
               </p>
               <button
                 onClick={() => { if (usage.freeCount >= FREE_LIMIT && usage.paidCredits <= 0) setShowPayModal(true); }}
