@@ -90,9 +90,9 @@ interface Conversation {
 // ── Usage / payment config ────────────────────────────────────────────────
 const FREE_LIMIT   = 20;
 const PAID_PACK    = 50;   // messages per payment
-const USDC_BASE    = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const USDC_SOLANA  = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const PAY_WALLET   = process.env.NEXT_PUBLIC_PAYMENT_WALLET ?? "";
-const PAY_AMOUNT   = 10000; // 0.01 USDC (6 decimals)
+const PAY_AMOUNT   = 10000; // 0.01 USDC (6 decimals, Solana USDC)
 
 interface UsageData { date: string; freeCount: number; paidCredits: number }
 
@@ -117,27 +117,31 @@ function incrementUsage() {
 }
 
 async function payWithWallet(): Promise<string> {
-  const eth = (window as any).ethereum;
-  if (!eth) throw new Error("NO_WALLET");
-  const [from] = await eth.request({ method: "eth_requestAccounts" });
-  // Switch to Base (chainId 8453 = 0x2105)
-  try {
-    await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x2105" }] });
-  } catch (e: any) {
-    if (e.code === 4902) {
-      await eth.request({
-        method: "wallet_addEthereumChain",
-        params: [{ chainId: "0x2105", chainName: "Base", nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 }, rpcUrls: ["https://mainnet.base.org"], blockExplorerUrls: ["https://basescan.org"] }],
-      });
-    } else throw e;
-  }
-  // ERC-20 transfer(address,uint256)
-  const data = "0xa9059cbb" + PAY_WALLET.slice(2).padStart(64, "0") + PAY_AMOUNT.toString(16).padStart(64, "0");
-  const txHash: string = await eth.request({
-    method: "eth_sendTransaction",
-    params: [{ from, to: USDC_BASE, data, chainId: "0x2105" }],
-  });
-  return txHash;
+  const sol = (window as any).solana;
+  if (!sol?.isPhantom && !sol) throw new Error("NO_WALLET");
+
+  await sol.connect();
+
+  // Dynamically import Solana packages (client-only)
+  const { Connection, PublicKey, Transaction } = await import("@solana/web3.js");
+  const { createTransferInstruction, getAssociatedTokenAddress } = await import("@solana/spl-token");
+
+  const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+  const fromPubkey = sol.publicKey;
+  const toPubkey   = new PublicKey(PAY_WALLET);
+  const mintPubkey  = new PublicKey(USDC_SOLANA);
+
+  const fromATA = await getAssociatedTokenAddress(mintPubkey, fromPubkey);
+  const toATA   = await getAssociatedTokenAddress(mintPubkey, toPubkey);
+
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+  const transaction = new Transaction({ recentBlockhash: blockhash, feePayer: fromPubkey }).add(
+    createTransferInstruction(fromATA, toATA, fromPubkey, PAY_AMOUNT)
+  );
+
+  const { signature } = await sol.signAndSendTransaction(transaction);
+  await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight });
+  return signature;
 }
 
 // ── Payment modal ──────────────────────────────────────────────────────────
@@ -154,7 +158,7 @@ function PaymentModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
       setStatus("done");
       setTimeout(() => { onSuccess(); onClose(); }, 1800);
     } catch (e: any) {
-      setErrMsg(e.message === "NO_WALLET" ? "No wallet detected. Install MetaMask or Coinbase Wallet." : "Payment cancelled or failed. Please try again.");
+      setErrMsg(e.message === "NO_WALLET" ? "No wallet detected. Install Phantom wallet (phantom.app)." : "Payment cancelled or failed. Please try again.");
       setStatus("err");
     }
   }
@@ -169,7 +173,7 @@ function PaymentModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
           Unlock <strong style={{ color: "#a78bfa" }}>{PAID_PACK} more messages</strong> for just <strong style={{ color: "#a78bfa" }}>0.01 USDC</strong>.
         </p>
         <div style={{ background: "#0d0d1a", borderRadius: 12, padding: "14px 16px", marginBottom: 18, border: "1px solid #1e1e3a" }}>
-          {[["Price", "0.01 USDC"], ["Messages unlocked", `${PAID_PACK} messages`], ["Network", "Base (fast + cheap)"]].map(([k, v]) => (
+          {[["Price", "0.01 USDC"], ["Messages unlocked", `${PAID_PACK} messages`], ["Network", "Solana (fast + cheap)"]].map(([k, v]) => (
             <div key={k} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
               <span style={{ color: "#555", fontSize: 13 }}>{k}</span>
               <span style={{ color: k === "Network" ? "#6c63ff" : "#fff", fontWeight: 600, fontSize: 13 }}>{v}</span>
@@ -182,17 +186,17 @@ function PaymentModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
           {status === "paying" ? "Confirm in your wallet…" : status === "done" ? "✅ Done!" : "Pay 0.01 USDC with Wallet"}
         </button>
         <button onClick={onClose} style={{ width: "100%", padding: "10px 0", borderRadius: 10, border: "1px solid #252535", background: "transparent", color: "#555", fontSize: 14, cursor: "pointer" }}>Cancel</button>
-        <p style={{ color: "#333", fontSize: 11, textAlign: "center", marginTop: 12 }}>Supports $BMIND · Powered by Base</p>
+        <p style={{ color: "#333", fontSize: 11, textAlign: "center", marginTop: 12 }}>Supports $BMIND · Powered by Solana</p>
       </div>
     </div>
   );
 }
 
 const SUGGESTIONS = [
-  "What is the Base blockchain?",
+  "What is Solana and why is it fast?",
   "Generate image of a crypto bull riding a rocket",
-  "What's trending in crypto today?",
-  "Create art of $BMIND token on Base blockchain",
+  "What's trending on Solana today?",
+  "Create art of $BMIND token on Solana",
 ];
 
 function genId() {
@@ -666,7 +670,7 @@ export default function Home() {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6, paddingLeft: 4, paddingRight: 4 }}>
               <p style={{ fontSize: 11, color: "#2a2a2a" }}>
-                {isMobile ? "" : "BasedMind can make mistakes. Powered by $BMIND on Base."}
+                {isMobile ? "" : "BasedMind can make mistakes. Powered by $BMIND on Solana."}
               </p>
               <button
                 onClick={() => { if (usage.freeCount >= FREE_LIMIT && usage.paidCredits <= 0) setShowPayModal(true); }}

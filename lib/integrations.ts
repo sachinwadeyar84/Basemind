@@ -1,32 +1,20 @@
-const GOPLUS_CHAIN: Record<string, string> = {
-  ethereum: "1", eth: "1",
-  bsc: "56", "binance-smart-chain": "56",
-  base: "8453",
-  polygon: "137",
-  arbitrum: "42161",
-  optimism: "10",
-  avalanche: "43114",
-  fantom: "250",
-  solana: "solana",
-};
-
 // ── Full Token Analysis — DEX Screener + GoPlus Security + Score ───────────
 export async function fetchFullTokenAnalysis(address: string): Promise<string> {
   try {
-    // Fetch DEX Screener and GoPlus simultaneously where possible
     const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${address}`;
     const dexRes = await fetch(dexUrl, { cache: "no-store" });
     const dexData = dexRes.ok ? await dexRes.json() : { pairs: [] };
-    const pairs: any[] = (dexData.pairs || []).sort((a: any, b: any) =>
-      (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0)
-    ).slice(0, 1);
+    const pairs: any[] = (dexData.pairs || [])
+      .filter((p: any) => p.chainId === "solana")
+      .sort((a: any, b: any) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0))
+      .slice(0, 1);
     const top = pairs[0];
 
-    const chainId = top ? (GOPLUS_CHAIN[top.chainId] ?? "8453") : "8453";
-    const gpUrl = `https://api.gopluslabs.io/api/v1/token_security/${chainId}?contract_addresses=${address.toLowerCase()}`;
+    // GoPlus Solana security check
+    const gpUrl = `https://api.gopluslabs.io/api/v1/token_security/solana?contract_addresses=${address}`;
     const gpRes = await fetch(gpUrl, { cache: "no-store" });
     const gpData = gpRes.ok ? await gpRes.json() : {};
-    const sec = gpData.result?.[address.toLowerCase()];
+    const sec = gpData.result?.[address] ?? gpData.result?.[address.toLowerCase()];
 
     // ── DEX section ────────────────────────────────────────────────────────
     let dexSection = "";
@@ -39,10 +27,10 @@ export async function fetchFullTokenAnalysis(address: string): Promise<string> {
       const age  = top.pairCreatedAt ? new Date(top.pairCreatedAt).toLocaleDateString() : "N/A";
       const twitter = top.info?.socials?.find((s: any) => s.type === "twitter")?.url ?? "";
       const website = top.info?.websites?.[0]?.url ?? "";
+      const dexLink = `https://dexscreener.com/solana/${top.baseToken.address}`;
 
-      const dexLink = `https://dexscreener.com/${top.chainId}/${top.baseToken.address}`;
       dexSection =
-        `Token: ${top.baseToken.name} (${top.baseToken.symbol.toUpperCase()}) on ${top.chainId}\n` +
+        `Token: ${top.baseToken.name} (${top.baseToken.symbol.toUpperCase()}) on Solana\n` +
         `Price: $${top.priceUsd} | 24h: ${arrow}${Math.abs(Number(change24h)).toFixed(2)}%\n` +
         `Market Cap: ${mcap} | Liquidity: ${liq} | Volume 24h: ${vol}\n` +
         `Pair created: ${age} | DEX: ${top.dexId}\n` +
@@ -51,53 +39,37 @@ export async function fetchFullTokenAnalysis(address: string): Promise<string> {
         `DEX Screener: ${dexLink}\n`;
     }
 
-    // ── Security section + Score ───────────────────────────────────────────
+    // ── Security section — Solana-specific fields ──────────────────────────
     let secSection = "";
     if (sec) {
-      const honeypot   = sec.is_honeypot === "1";
-      const buyTax     = parseFloat(sec.buy_tax  || "0") * 100;
-      const sellTax    = parseFloat(sec.sell_tax || "0") * 100;
-      const mintable   = sec.is_mintable === "1";
+      const mintAuth   = !!sec.mint_authority;
+      const freezeAuth = !!sec.freeze_authority;
       const holders    = parseInt(sec.holder_count || "0");
-      const openSource = sec.is_open_source === "1";
-      const canTakeBack = sec.can_take_back_ownership === "1";
-      const ownerChange = sec.owner_change_balance === "1";
-      const blacklist  = sec.is_blacklisted === "1" || sec.transfer_pausable === "1";
-      const cooldown   = sec.trading_cooldown === "1";
       const liqLocked  = (sec.lp_holders || []).some((lp: any) => lp.is_locked === 1);
+      const topHolder  = parseFloat(sec.top10_holder_rate || "0") * 100;
 
       let score = 50;
-      if (honeypot) {
-        score = 0;
-      } else {
-        if (buyTax < 5 && sellTax < 5)       score += 15;
-        else if (buyTax >= 20 || sellTax >= 20) score -= 20;
-        if (holders > 500)  score += 15;
-        else if (holders > 100) score += 10;
-        else if (holders > 50)  score += 5;
-        if (openSource)    score += 10;
-        if (!mintable)     score += 10; else score -= 10;
-        if (liqLocked)     score += 15;
-        if (canTakeBack)   score -= 15;
-        if (ownerChange)   score -= 10;
-        if (blacklist)     score -= 10;
-        if (cooldown)      score -= 5;
-        score = Math.max(0, Math.min(100, score));
+      if (!mintAuth)   score += 20; else score -= 20;
+      if (!freezeAuth) score += 15; else score -= 15;
+      if (holders > 1000)      score += 15;
+      else if (holders > 500)  score += 10;
+      else if (holders > 100)  score += 5;
+      if (liqLocked)   score += 15;
+      if (topHolder > 0) {
+        if (topHolder < 20) score += 5;
+        else if (topHolder > 50) score -= 15;
       }
+      score = Math.max(0, Math.min(100, score));
 
       const label = score >= 80 ? "Low Risk ✅" : score >= 60 ? "Moderate ⚠️" : score >= 40 ? "Caution 🔶" : "High Risk 🚨";
 
       secSection =
-        `\nSecurity Analysis (GoPlus):\n` +
-        `${honeypot ? "🚨 HONEYPOT DETECTED — DO NOT BUY" : "✅ Not a honeypot"}\n` +
-        `${buyTax < 10 ? "✅" : "⚠️"} Buy tax: ${buyTax.toFixed(1)}% | Sell tax: ${sellTax.toFixed(1)}%\n` +
-        `${!mintable ? "✅" : "⚠️"} Mintable: ${mintable ? "Yes (owner can print tokens)" : "No"}\n` +
+        `\nSecurity Analysis (GoPlus — Solana):\n` +
+        `${!mintAuth ? "✅" : "🚨"} Mint authority: ${mintAuth ? "ACTIVE — supply can increase" : "Disabled (safe)"}\n` +
+        `${!freezeAuth ? "✅" : "⚠️"} Freeze authority: ${freezeAuth ? "ACTIVE — accounts can be frozen" : "Disabled (safe)"}\n` +
         `${holders > 100 ? "✅" : "⚠️"} Holders: ${holders.toLocaleString()}\n` +
-        `${openSource ? "✅" : "⚠️"} Open source: ${openSource ? "Yes" : "No"}\n` +
-        `${liqLocked ? "✅" : "⚠️"} Liquidity locked: ${liqLocked ? "Yes" : "No"}\n` +
-        (canTakeBack ? "🚨 Owner can reclaim ownership\n" : "") +
-        (ownerChange ? "⚠️ Owner can modify holder balances\n" : "") +
-        (blacklist   ? "⚠️ Blacklist/pause function exists\n" : "") +
+        `${liqLocked ? "✅" : "⚠️"} Liquidity locked: ${liqLocked ? "Yes" : "No/Unknown"}\n` +
+        (topHolder > 0 ? `${topHolder < 30 ? "✅" : "⚠️"} Top 10 holder concentration: ${topHolder.toFixed(1)}%\n` : "") +
         `\nBasedMind Score: ${score}/100 — ${label}`;
     }
 
@@ -108,11 +80,11 @@ export async function fetchFullTokenAnalysis(address: string): Promise<string> {
   }
 }
 
-// ── New Gem Finder — GeckoTerminal new pools (last 24h) ────────────────────
+// ── New Gem Finder — GeckoTerminal Solana new pools (last 24h) ─────────────
 export async function fetchNewGems(): Promise<string> {
   try {
     const res = await fetch(
-      "https://api.geckoterminal.com/api/v2/networks/base/new_pools?page=1",
+      "https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1",
       { headers: { Accept: "application/json;version=20230302" }, cache: "no-store" }
     );
     if (!res.ok) return "";
@@ -130,7 +102,7 @@ export async function fetchNewGems(): Promise<string> {
       })
       .slice(0, 8);
 
-    if (!pools.length) return "\n\n[NEW GEM FINDER]\nNo significant new tokens found on Base in the last 24h.\n";
+    if (!pools.length) return "\n\n[NEW GEM FINDER]\nNo significant new tokens found on Solana in the last 24h.\n";
 
     const lines = pools.map((p: any, i: number) => {
       const a = p.attributes;
@@ -141,7 +113,7 @@ export async function fetchNewGems(): Promise<string> {
       const hrs  = Math.round((now - new Date(a.pool_created_at).getTime()) / 36e5);
       const baseTokenRel = p.relationships?.base_token?.data?.id ?? "";
       const tokenAddr = baseTokenRel.includes("_") ? baseTokenRel.split("_").slice(1).join("_") : "";
-      const dexLink = tokenAddr ? `https://dexscreener.com/base/${tokenAddr}` : "";
+      const dexLink = tokenAddr ? `https://dexscreener.com/solana/${tokenAddr}` : "";
       return (
         `  ${i + 1}. ${a.name} ${arrow}${Math.abs(ch).toFixed(1)}%\n` +
         `     Liq: $${liq.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
@@ -152,25 +124,27 @@ export async function fetchNewGems(): Promise<string> {
       );
     });
 
-    return `\n\n[NEW GEM FINDER — Base, last 24h]\nFiltered: Liq > $5K, Vol > $1K\n${lines.join("\n")}\n`;
+    return `\n\n[NEW GEM FINDER — Solana, last 24h]\nFiltered: Liq > $5K, Vol > $1K\n${lines.join("\n")}\n`;
   } catch {
     return "";
   }
 }
 
-// ── DEX Screener — any token by name or contract address ──────────────────
+// ── DEX Screener — any Solana token by name or contract address ────────────
 export async function fetchDexScreener(query: string): Promise<string> {
   try {
-    const isAddress = /0x[a-fA-F0-9]{40}/i.test(query);
-    const addressMatch = query.match(/0x[a-fA-F0-9]{40}/i);
-    const url = isAddress && addressMatch
-      ? `https://api.dexscreener.com/latest/dex/tokens/${addressMatch[0]}`
+    const cleanQuery = query.replace(/https?:\/\/\S+/gi, "");
+    const solAddr = cleanQuery.match(/[1-9A-HJ-NP-Za-km-z]{43,44}/)?.[0];
+    const url = solAddr
+      ? `https://api.dexscreener.com/latest/dex/tokens/${solAddr}`
       : `https://api.dexscreener.com/latest/dex/search/?q=${encodeURIComponent(query)}`;
 
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return "";
     const data = await res.json();
-    const pairs: any[] = (data.pairs || []).slice(0, 3);
+    const pairs: any[] = (data.pairs || [])
+      .filter((p: any) => p.chainId === "solana")
+      .slice(0, 3);
     if (!pairs.length) return "";
 
     const lines = pairs.map((p: any) => {
@@ -181,7 +155,7 @@ export async function fetchDexScreener(query: string): Promise<string> {
       const vol = p.volume?.h24 ? `$${Number(p.volume.h24).toLocaleString()}` : "N/A";
       const age = p.pairCreatedAt ? new Date(p.pairCreatedAt).toLocaleDateString() : "N/A";
       return (
-        `${p.baseToken.name} (${p.baseToken.symbol.toUpperCase()}) on ${p.dexId} [${p.chainId}]\n` +
+        `${p.baseToken.name} (${p.baseToken.symbol.toUpperCase()}) on ${p.dexId} [Solana]\n` +
         `  Price: $${p.priceUsd} | 24h: ${arrow}${Math.abs(Number(change24h)).toFixed(2)}%\n` +
         `  Volume 24h: ${vol} | Liquidity: ${liq} | Market cap: ${mcap}\n` +
         `  Pair created: ${age} | Contract: ${p.baseToken.address}`
@@ -194,7 +168,7 @@ export async function fetchDexScreener(query: string): Promise<string> {
   }
 }
 
-// ── DeFiLlama — TVL, chain rankings, Base stats ────────────────────────────
+// ── DeFiLlama — TVL, chain rankings, Solana stats ─────────────────────────
 export async function fetchDefiLlama(): Promise<string> {
   try {
     const res = await fetch("https://api.llama.fi/v2/chains", { cache: "no-store" });
@@ -205,13 +179,13 @@ export async function fetchDefiLlama(): Promise<string> {
     const top5 = sorted.slice(0, 5).map((c, i) =>
       `  ${i + 1}. ${c.name}: $${(c.tvl / 1e9).toFixed(2)}B`
     );
-    const base = chains.find((c) => c.name === "Base");
-    const baseTvl = base ? `$${(base.tvl / 1e9).toFixed(2)}B` : "N/A";
-    const baseRank = base ? sorted.findIndex((c) => c.name === "Base") + 1 : "N/A";
+    const solana = chains.find((c) => c.name === "Solana");
+    const solanaTvl = solana ? `$${(solana.tvl / 1e9).toFixed(2)}B` : "N/A";
+    const solanaRank = solana ? sorted.findIndex((c) => c.name === "Solana") + 1 : "N/A";
 
     return (
       `\n\n[DEFILLLAMA LIVE DATA]\n` +
-      `Base TVL: ${baseTvl} (ranked #${baseRank} across all chains)\n` +
+      `Solana TVL: ${solanaTvl} (ranked #${solanaRank} across all chains)\n` +
       `Top 5 chains by TVL:\n${top5.join("\n")}\n`
     );
   } catch {
@@ -247,51 +221,23 @@ export async function fetchFearGreed(): Promise<string> {
   }
 }
 
-// ── Gas Tracker ────────────────────────────────────────────────────────────
+// ── Solana Transaction Fees ────────────────────────────────────────────────
 export async function fetchGasPrice(): Promise<string> {
-  try {
-    // Use ETH gas station v2 (no key)
-    const res = await fetch("https://ethgas.watch/api/gas", { cache: "no-store" });
-    if (!res.ok) throw new Error("gas api failed");
-    const data = await res.json();
-    return (
-      `\n\n[LIVE ETH GAS PRICES]\n` +
-      `🐢 Slow: ${data.slow?.gwei} gwei (~$${data.slow?.usd})\n` +
-      `🚶 Normal: ${data.normal?.gwei} gwei (~$${data.normal?.usd})\n` +
-      `🚀 Fast: ${data.fast?.gwei} gwei (~$${data.fast?.usd})\n` +
-      `⚡ Base L2: ~$0.001 per transaction (99% cheaper than mainnet)\n`
-    );
-  } catch {
-    try {
-      // fallback: blocknative
-      const res2 = await fetch("https://api.blocknative.com/gasprices/blockprices", { cache: "no-store" });
-      if (!res2.ok) return "";
-      const d = await res2.json();
-      const est = d.blockPrices?.[0]?.estimatedPrices;
-      if (!est) return "";
-      return (
-        `\n\n[LIVE ETH GAS PRICES]\n` +
-        `Slow: ${est[3]?.price} gwei | Normal: ${est[2]?.price} gwei | Fast: ${est[0]?.price} gwei\n` +
-        `Base L2: ~$0.001 per tx\n`
-      );
-    } catch {
-      return "";
-    }
-  }
+  return (
+    `\n\n[SOLANA TRANSACTION FEES]\n` +
+    `🪙 Base fee: 5,000 lamports (0.000005 SOL ≈ <$0.001)\n` +
+    `⚡ Priority fee: 0–0.001 SOL during network congestion\n` +
+    `🚀 Finality: ~400ms average block time\n` +
+    `📊 Typical swap (Jupiter/Raydium): <$0.01 total\n` +
+    `🔗 Live network status: https://status.solana.com\n`
+  );
 }
 
-// ── Trending Tokens — GeckoTerminal (24h data + DEX Screener links) ────────
-const GT_TO_DEX: Record<string, string> = {
-  eth: "ethereum", bsc: "bsc", base: "base",
-  polygon_pos: "polygon", arbitrum: "arbitrum",
-  optimism: "optimism", avax: "avalanche",
-  solana: "solana", fantom: "fantom",
-};
-
+// ── Trending Tokens — GeckoTerminal Solana (24h + DEX Screener links) ──────
 export async function fetchTrending(): Promise<string> {
   try {
     const res = await fetch(
-      "https://api.geckoterminal.com/api/v2/networks/base/trending_pools?page=1",
+      "https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1",
       { headers: { Accept: "application/json;version=20230302" }, cache: "no-store" }
     );
     if (!res.ok) throw new Error("gecko failed");
@@ -302,12 +248,11 @@ export async function fetchTrending(): Promise<string> {
 
     const lines = pools.map((p: any, i: number) => {
       const a = p.attributes;
-      // Extract token address from relationship id like "base_0x1234..."
       const baseTokenRel = p.relationships?.base_token?.data?.id ?? "";
       const tokenAddr = baseTokenRel.includes("_") ? baseTokenRel.split("_").slice(1).join("_") : (a.address ?? "");
-      const dexLink = tokenAddr ? `https://dexscreener.com/base/${tokenAddr}` : "";
+      const dexLink = tokenAddr ? `https://dexscreener.com/solana/${tokenAddr}` : "";
 
-      const price    = a.base_token_price_usd
+      const price = a.base_token_price_usd
         ? `$${parseFloat(a.base_token_price_usd).toLocaleString(undefined, { maximumSignificantDigits: 4 })}`
         : "N/A";
       const ch24  = parseFloat(a.price_change_percentage?.h24 ?? "0");
@@ -317,7 +262,7 @@ export async function fetchTrending(): Promise<string> {
       const txns  = (a.transactions?.h24?.buys ?? 0) + (a.transactions?.h24?.sells ?? 0);
 
       return (
-        `${i + 1}. **${a.name}** [BASE]\n` +
+        `${i + 1}. **${a.name}** [SOLANA]\n` +
         `   Price: ${price} | 24h: ${arrow}${Math.abs(ch24).toFixed(1)}%\n` +
         `   Vol 24h: $${vol.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
         `Liq: $${liq.toLocaleString(undefined, { maximumFractionDigits: 0 })} | ` +
@@ -326,9 +271,9 @@ export async function fetchTrending(): Promise<string> {
       );
     });
 
-    return `\n\n[TRENDING POOLS ON BASE — Last 24h]\n${lines.join("\n")}\n`;
+    return `\n\n[TRENDING POOLS ON SOLANA — Last 24h]\n${lines.join("\n")}\n`;
   } catch {
-    // CoinGecko fallback (no DEX links available)
+    // CoinGecko fallback
     try {
       const res = await fetch("https://api.coingecko.com/api/v3/search/trending", { cache: "no-store" });
       if (!res.ok) return "";
