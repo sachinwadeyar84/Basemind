@@ -491,7 +491,7 @@ export default function Home() {
 
         {/* Footer */}
         <div style={{ padding: "10px 12px", borderTop: "1px solid #1f1f1f", fontSize: 11, color: "#333", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span>$BMIND · AI on Base</span>
+          <span>$BMIND · AI on Solana</span>
           <Link href="/" style={{ color: "#1d6fd8", textDecoration: "none", fontSize: 11 }}>← Home</Link>
         </div>
       </div>
@@ -555,7 +555,7 @@ export default function Home() {
                   How can I help you today?
                 </h2>
                 <p style={{ fontSize: 13, color: "#444", marginBottom: 32 }}>
-                  AI for the $BMIND ecosystem on Base
+                  AI for the $BMIND ecosystem on Solana
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr", gap: 8, maxWidth: 480, margin: "0 auto" }}>
                   {SUGGESTIONS.map(s => (

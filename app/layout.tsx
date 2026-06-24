@@ -5,11 +5,11 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "BasedMind — AI for Base Crypto",
-  description: "The smartest AI assistant on Base. Real-time prices, DeFi data, trending tokens, gas tracker and more. Powered by $BMIND.",
+  title: "BasedMind — AI for Solana Crypto",
+  description: "The smartest AI assistant on Solana. Real-time prices, DeFi data, trending tokens, and more. Powered by $BMIND.",
   openGraph: {
-    title: "BasedMind — AI for Base Crypto",
-    description: "Real-time crypto AI powered by $BMIND on Base blockchain.",
+    title: "BasedMind — AI for Solana Crypto",
+    description: "Real-time crypto AI powered by $BMIND on Solana.",
     images: ["/logo.png"],
   },
 };

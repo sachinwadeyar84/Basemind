@@ -7,12 +7,12 @@ import { useState, useEffect } from "react";
 const FEATURES = [
   { icon: "📈", title: "Live Token Prices", desc: "Real-time prices for any coin — Bitcoin, ETH, meme coins — straight from CoinGecko." },
   { icon: "🔍", title: "DEX Screener", desc: "Paste any contract address to instantly get price, volume, liquidity, and market cap." },
-  { icon: "🏦", title: "DeFi TVL Rankings", desc: "Total value locked on Base and every major chain, live from DeFiLlama." },
+  { icon: "🏦", title: "DeFi TVL Rankings", desc: "Total value locked on Solana and every major chain, live from DeFiLlama." },
   { icon: "😱", title: "Fear & Greed Index", desc: "Real-time market sentiment score — know if crypto is panicking or greedy before you trade." },
   { icon: "⛽", title: "ETH Gas Tracker", desc: "Live Ethereum gas prices — slow, normal, fast — before any on-chain transaction." },
   { icon: "🔥", title: "Trending Tokens", desc: "See what's pumping on CoinGecko right now. Coins, NFTs, and top movers." },
   { icon: "📰", title: "Crypto News", desc: "Latest headlines fetched live so you never miss a market-moving announcement." },
-  { icon: "🧠", title: "Deep AI Knowledge", desc: "Expert-level answers on Base, DeFi, Solidity, trading, meme coins, and everything crypto." },
+  { icon: "🧠", title: "Deep AI Knowledge", desc: "Expert-level answers on Solana, DeFi, trading, meme coins, pump.fun, and everything crypto." },
 ];
 
 const STATS = [
@@ -125,7 +125,7 @@ export default function LandingPage() {
             background: "linear-gradient(135deg, #2196f3 0%, #38bdf8 50%, #67e8f9 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
           }}>
-            on Base
+            on Solana
           </span>
         </h1>
 
@@ -337,7 +337,7 @@ export default function LandingPage() {
             <Image src="/logo.png" alt="BasedMind" width={28} height={28} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
           <span style={{ fontSize: 13, color: "#1f2937" }}>
-            BasedMind · $BMIND on Base · AI for Crypto
+            BasedMind · $BMIND on Solana · AI for Crypto
           </span>
         </div>
         <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
