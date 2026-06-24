@@ -1,19 +1,22 @@
-// ── Full Token Analysis — DEX Screener + GoPlus Security + Score ───────────
+// ── Full Token Analysis — DEX Screener + GoPlus + RugCheck ──────────────────
 export async function fetchFullTokenAnalysis(address: string): Promise<string> {
   try {
-    const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${address}`;
-    const dexRes = await fetch(dexUrl, { cache: "no-store" });
-    const dexData = dexRes.ok ? await dexRes.json() : { pairs: [] };
+    // Fetch all 3 sources in parallel
+    const [dexRes, gpRes, rcRes] = await Promise.allSettled([
+      fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`, { cache: "no-store" }),
+      fetch(`https://api.gopluslabs.io/api/v1/token_security/solana?contract_addresses=${address}`, { cache: "no-store" }),
+      fetch(`https://api.rugcheck.xyz/v1/tokens/${address}/report`, { cache: "no-store" }),
+    ]);
+
+    const dexData = dexRes.status === "fulfilled" && dexRes.value.ok ? await dexRes.value.json() : { pairs: [] };
+    const gpData  = gpRes.status  === "fulfilled" && gpRes.value.ok  ? await gpRes.value.json()  : {};
+    const rcData  = rcRes.status  === "fulfilled" && rcRes.value.ok  ? await rcRes.value.json()  : null;
+
     const pairs: any[] = (dexData.pairs || [])
       .filter((p: any) => p.chainId === "solana")
       .sort((a: any, b: any) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0))
       .slice(0, 1);
     const top = pairs[0];
-
-    // GoPlus Solana security check
-    const gpUrl = `https://api.gopluslabs.io/api/v1/token_security/solana?contract_addresses=${address}`;
-    const gpRes = await fetch(gpUrl, { cache: "no-store" });
-    const gpData = gpRes.ok ? await gpRes.json() : {};
     const sec = gpData.result?.[address] ?? gpData.result?.[address.toLowerCase()];
 
     // ── DEX section ────────────────────────────────────────────────────────
@@ -39,8 +42,10 @@ export async function fetchFullTokenAnalysis(address: string): Promise<string> {
         `DEX Screener: ${dexLink}\n`;
     }
 
-    // ── Security section — Solana-specific fields ──────────────────────────
+    // ── GoPlus security section ────────────────────────────────────────────
     let secSection = "";
+    let score = 50;
+
     if (sec) {
       const mintAuth   = !!sec.mint_authority;
       const freezeAuth = !!sec.freeze_authority;
@@ -48,7 +53,6 @@ export async function fetchFullTokenAnalysis(address: string): Promise<string> {
       const liqLocked  = (sec.lp_holders || []).some((lp: any) => lp.is_locked === 1);
       const topHolder  = parseFloat(sec.top10_holder_rate || "0") * 100;
 
-      let score = 50;
       if (!mintAuth)   score += 20; else score -= 20;
       if (!freezeAuth) score += 15; else score -= 15;
       if (holders > 1000)      score += 15;
@@ -59,22 +63,68 @@ export async function fetchFullTokenAnalysis(address: string): Promise<string> {
         if (topHolder < 20) score += 5;
         else if (topHolder > 50) score -= 15;
       }
-      score = Math.max(0, Math.min(100, score));
-
-      const label = score >= 80 ? "Low Risk ✅" : score >= 60 ? "Moderate ⚠️" : score >= 40 ? "Caution 🔶" : "High Risk 🚨";
 
       secSection =
-        `\nSecurity Analysis (GoPlus — Solana):\n` +
-        `${!mintAuth ? "✅" : "🚨"} Mint authority: ${mintAuth ? "ACTIVE — supply can increase" : "Disabled (safe)"}\n` +
-        `${!freezeAuth ? "✅" : "⚠️"} Freeze authority: ${freezeAuth ? "ACTIVE — accounts can be frozen" : "Disabled (safe)"}\n` +
+        `\nSecurity Checks (GoPlus):\n` +
+        `${!mintAuth ? "✅" : "🚨"} Mint authority: ${mintAuth ? "ACTIVE — dev can print tokens" : "Disabled (safe)"}\n` +
+        `${!freezeAuth ? "✅" : "⚠️"} Freeze authority: ${freezeAuth ? "ACTIVE — dev can freeze wallets" : "Disabled (safe)"}\n` +
         `${holders > 100 ? "✅" : "⚠️"} Holders: ${holders.toLocaleString()}\n` +
-        `${liqLocked ? "✅" : "⚠️"} Liquidity locked: ${liqLocked ? "Yes" : "No/Unknown"}\n` +
-        (topHolder > 0 ? `${topHolder < 30 ? "✅" : "⚠️"} Top 10 holder concentration: ${topHolder.toFixed(1)}%\n` : "") +
-        `\nSolAI Score: ${score}/100 — ${label}`;
+        `${liqLocked ? "✅" : "⚠️"} Liquidity locked: ${liqLocked ? "Yes" : "No — instant rug possible"}\n` +
+        (topHolder > 0 ? `${topHolder < 30 ? "✅" : "⚠️"} Top 10 concentration: ${topHolder.toFixed(1)}%\n` : "");
     }
 
-    if (!dexSection && !secSection) return "";
-    return `\n\n[FULL TOKEN ANALYSIS]\n${dexSection}${secSection}\n`;
+    // ── RugCheck section ───────────────────────────────────────────────────
+    let rugSection = "";
+    if (rcData) {
+      const rcScore: number = rcData.score ?? rcData.score_normalised ?? 0;
+      const risks: any[]   = rcData.risks ?? [];
+      const topHolders: any[] = (rcData.topHolders ?? []).slice(0, 3);
+      const creator: string   = rcData.creator ?? rcData.mint ?? "";
+
+      // Adjust SolAI score based on RugCheck
+      const dangerCount = risks.filter((r: any) => r.level === "danger").length;
+      const warnCount   = risks.filter((r: any) => r.level === "warn").length;
+      score -= dangerCount * 12;
+      score -= warnCount   * 5;
+      if (rcScore > 500) score -= 10;
+
+      const riskLines = risks.slice(0, 6).map((r: any) =>
+        `  ${r.level === "danger" ? "🚨" : r.level === "warn" ? "⚠️" : "ℹ️"} ${r.name}${r.value ? ` (${r.value})` : ""}: ${r.description ?? ""}`
+      );
+
+      const holderLines = topHolders.map((h: any, i: number) =>
+        `  #${i + 1}: ${h.address ? h.address.slice(0, 8) + "…" : "unknown"} — ${((h.pct ?? h.percentage ?? 0) * 100).toFixed(1)}%`
+      );
+
+      rugSection =
+        `\nRugCheck.xyz Analysis:\n` +
+        `Risk Score: ${rcScore}/1000 ${rcScore < 200 ? "(Low ✅)" : rcScore < 500 ? "(Medium ⚠️)" : "(High 🚨)"}\n` +
+        (riskLines.length ? `Flags:\n${riskLines.join("\n")}\n` : `No major risk flags detected ✅\n`) +
+        (holderLines.length ? `Top holders:\n${holderLines.join("\n")}\n` : "") +
+        (creator ? `Deployer: ${creator.slice(0, 16)}…\n` : "");
+    }
+
+    // ── Also check DexScreener signals ────────────────────────────────────
+    let dexSignals = "";
+    if (top) {
+      const vol  = Number(top.volume?.h24 ?? 0);
+      const liq  = Number(top.liquidity?.usd ?? 0);
+      const hasSocials = !!(top.info?.socials?.length || top.info?.websites?.length);
+      const volLiqRatio = liq > 0 ? vol / liq : 0;
+
+      if (!hasSocials) { score -= 10; dexSignals += `⚠️ No socials/website registered on DEX Screener\n`; }
+      else             { score +=  5; dexSignals += `✅ Socials registered\n`; }
+      if (volLiqRatio > 10) dexSignals += `⚠️ Volume/Liquidity ratio: ${volLiqRatio.toFixed(1)}x — possible wash trading\n`;
+    }
+
+    score = Math.max(0, Math.min(100, score));
+    const label   = score >= 80 ? "Low Risk ✅"   : score >= 60 ? "Moderate ⚠️" : score >= 40 ? "Caution 🔶" : "High Risk 🚨";
+    const verdict = score >= 70 ? "🟢 LIKELY LEGIT" : score >= 45 ? "🟡 SUSPICIOUS — do your own research" : "🔴 HIGH RUG RISK — extreme caution";
+
+    const scoreSection = `\n━━━━━━━━━━━━━━━━━━━━━━\nSolAI Rug Score: ${score}/100 — ${label}\nVerdict: ${verdict}\n━━━━━━━━━━━━━━━━━━━━━━`;
+
+    if (!dexSection && !secSection && !rugSection) return "";
+    return `\n\n[FULL TOKEN ANALYSIS]\n${dexSection}${secSection}${dexSignals}${rugSection}${scoreSection}\n`;
   } catch {
     return "";
   }
