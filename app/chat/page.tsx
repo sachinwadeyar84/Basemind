@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import { Send, Plus, MessageSquare, Trash2, Copy, Check, Menu } from "lucide-react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import PriceGame from "@/components/PriceGame";
 
 const POLL_MODELS = ["flux", "turbo", "flux-realism", "flux-anime"];
 
@@ -212,6 +213,7 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showPayModal, setShowPayModal] = useState(false);
+  const [showGame, setShowGame] = useState(false);
   const [usage, setUsage] = useState<UsageData>({ date: "", freeCount: 0, paidCredits: 0 });
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -527,19 +529,33 @@ export default function Home() {
             <span style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>SolAI</span>
           </div>
 
-          {/* New chat button */}
-          <button
-            onClick={newChat}
-            style={{
-              background: "linear-gradient(135deg,#1d6fd8,#38bdf8)",
-              border: "none", color: "#fff", cursor: "pointer",
-              padding: "8px 12px", borderRadius: 10, display: "flex",
-              alignItems: "center", gap: 6,
-            }}
-          >
-            <Plus size={18} />
-            {isMobile && <span style={{ fontSize: 12, fontWeight: 700 }}>New</span>}
-          </button>
+          {/* Right buttons */}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={() => setShowGame(true)}
+              title="Price Prediction Game"
+              style={{
+                background: "linear-gradient(135deg,#9945FF,#14F195)",
+                border: "none", color: "#fff", cursor: "pointer",
+                padding: "8px 12px", borderRadius: 10, display: "flex",
+                alignItems: "center", gap: 6, fontWeight: 700, fontSize: 13,
+              }}
+            >
+              🎮{!isMobile && <span style={{ fontSize: 12 }}>Predict</span>}
+            </button>
+            <button
+              onClick={newChat}
+              style={{
+                background: "linear-gradient(135deg,#1d6fd8,#38bdf8)",
+                border: "none", color: "#fff", cursor: "pointer",
+                padding: "8px 12px", borderRadius: 10, display: "flex",
+                alignItems: "center", gap: 6,
+              }}
+            >
+              <Plus size={18} />
+              {isMobile && <span style={{ fontSize: 12, fontWeight: 700 }}>New</span>}
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
@@ -692,6 +708,7 @@ export default function Home() {
           onSuccess={() => setUsage(getUsage())}
         />
       )}
+      {showGame && <PriceGame onClose={() => setShowGame(false)} />}
 
       <style>{`
         div:hover .delete-btn { opacity: 1 !important; }
