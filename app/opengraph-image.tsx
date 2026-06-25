@@ -10,109 +10,137 @@ export default function Image() {
     (
       <div
         style={{
-          background: "#050509",
+          background: "#06020F",
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          padding: "80px",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 80px",
           position: "relative",
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "Arial, sans-serif",
+          overflow: "hidden",
         }}
       >
-        {/* Purple glow */}
-        <div style={{
-          position: "absolute", top: 0, left: 0,
-          width: "500px", height: "500px", borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(153,69,255,0.25) 0%, transparent 70%)",
-          display: "flex",
-        }} />
-        {/* Green glow */}
-        <div style={{
-          position: "absolute", bottom: 0, right: 0,
-          width: "400px", height: "400px", borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(20,241,149,0.15) 0%, transparent 70%)",
-          display: "flex",
-        }} />
+        {/* Background glow blobs */}
+        <div style={{ position: "absolute", top: "-100px", left: "-100px", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(circle, rgba(153,69,255,0.3) 0%, transparent 65%)", display: "flex" }} />
+        <div style={{ position: "absolute", bottom: "-80px", right: "200px", width: "400px", height: "400px", borderRadius: "50%", background: "radial-gradient(circle, rgba(20,241,149,0.2) 0%, transparent 65%)", display: "flex" }} />
+        <div style={{ position: "absolute", top: "50%", left: "50%", width: "300px", height: "300px", borderRadius: "50%", background: "radial-gradient(circle, rgba(110,123,255,0.15) 0%, transparent 65%)", display: "flex" }} />
 
-        {/* Top border */}
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: "3px",
-          background: "linear-gradient(90deg,#9945FF,#6E7BFF,#14F195)",
-          display: "flex",
-        }} />
+        {/* Top gradient bar */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "4px", background: "linear-gradient(90deg,#9945FF,#6E7BFF,#14F195)", display: "flex" }} />
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "4px", background: "linear-gradient(90deg,#9945FF,#6E7BFF,#14F195)", display: "flex" }} />
 
-        {/* Logo circle */}
-        <div style={{
-          width: "110px", height: "110px", borderRadius: "28px",
-          background: "#0D0B21",
-          border: "2px solid rgba(153,69,255,0.4)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          marginBottom: "32px",
-          boxShadow: "0 0 40px rgba(153,69,255,0.3)",
-        }}>
+        {/* ── LEFT: Brain/AI Logo ── */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", width: "300px", height: "300px", flexShrink: 0 }}>
+
+          {/* Outer ring */}
           <div style={{
-            fontSize: "64px",
+            position: "absolute", width: "280px", height: "280px", borderRadius: "50%",
+            border: "2px solid rgba(153,69,255,0.3)",
             display: "flex",
-          }}>◎</div>
-        </div>
+          }} />
+          <div style={{
+            position: "absolute", width: "260px", height: "260px", borderRadius: "50%",
+            border: "1px solid rgba(20,241,149,0.2)",
+            display: "flex",
+          }} />
 
-        {/* Title */}
-        <div style={{
-          fontSize: "88px", fontWeight: 900,
-          letterSpacing: "-4px", lineHeight: 1,
-          marginBottom: "16px",
-          display: "flex",
-        }}>
-          <span style={{ color: "#ffffff" }}>Sol</span>
-          <span style={{ color: "#14F195" }}>AI</span>
-        </div>
+          {/* Core circle — brain background */}
+          <div style={{
+            width: "220px", height: "220px", borderRadius: "50%",
+            background: "linear-gradient(135deg, #1a0533 0%, #0a1f12 100%)",
+            border: "3px solid rgba(153,69,255,0.5)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            position: "relative",
+            boxShadow: "0 0 60px rgba(153,69,255,0.4), 0 0 120px rgba(153,69,255,0.15)",
+          }}>
 
-        {/* Subtitle */}
-        <div style={{
-          fontSize: "28px", color: "#6b7280", fontWeight: 400,
-          marginBottom: "48px",
-          display: "flex",
-        }}>
-          AI built for Solana degens
-        </div>
-
-        {/* Feature pills */}
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-          {[
-            { label: "🚨 Rug Detector", bg: "rgba(153,69,255,0.15)", border: "rgba(153,69,255,0.4)", color: "#a78bfa" },
-            { label: "💎 Gem Finder",   bg: "rgba(20,241,149,0.12)", border: "rgba(20,241,149,0.4)", color: "#14F195" },
-            { label: "🐦 KOL Scorer",   bg: "rgba(56,189,248,0.12)", border: "rgba(56,189,248,0.4)", color: "#38bdf8" },
-            { label: "🎮 Degen Arena",  bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.4)", color: "#fbbf24" },
-          ].map(p => (
-            <div key={p.label} style={{
-              padding: "10px 22px", borderRadius: "99px",
-              background: p.bg, border: `1.5px solid ${p.border}`,
-              color: p.color, fontSize: "18px", fontWeight: 600,
-              display: "flex",
-            }}>
-              {p.label}
+            {/* Inner S symbol styled as circuit */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              {/* Top arc */}
+              <div style={{
+                width: "80px", height: "44px", borderRadius: "40px 40px 0 0",
+                border: "8px solid #9945FF", borderBottom: "none",
+                display: "flex",
+              }} />
+              {/* Middle connector */}
+              <div style={{
+                width: "80px", height: "10px",
+                background: "linear-gradient(90deg, #9945FF, #14F195)",
+                display: "flex",
+              }} />
+              {/* Bottom arc */}
+              <div style={{
+                width: "80px", height: "44px", borderRadius: "0 0 40px 40px",
+                border: "8px solid #14F195", borderTop: "none",
+                display: "flex",
+              }} />
             </div>
-          ))}
+
+            {/* Node dots */}
+            <div style={{ position: "absolute", top: "28px", right: "30px", width: "14px", height: "14px", borderRadius: "50%", background: "#9945FF", boxShadow: "0 0 12px #9945FF", display: "flex" }} />
+            <div style={{ position: "absolute", bottom: "28px", left: "30px", width: "14px", height: "14px", borderRadius: "50%", background: "#14F195", boxShadow: "0 0 12px #14F195", display: "flex" }} />
+            <div style={{ position: "absolute", top: "50%", right: "22px", width: "9px", height: "9px", borderRadius: "50%", background: "#6E7BFF", display: "flex" }} />
+          </div>
+
+          {/* Orbit dots */}
+          <div style={{ position: "absolute", top: "16px", left: "50%", width: "10px", height: "10px", borderRadius: "50%", background: "#9945FF", boxShadow: "0 0 8px #9945FF", display: "flex" }} />
+          <div style={{ position: "absolute", bottom: "20px", right: "20px", width: "8px", height: "8px", borderRadius: "50%", background: "#14F195", boxShadow: "0 0 8px #14F195", display: "flex" }} />
+          <div style={{ position: "absolute", left: "10px", top: "50%", width: "7px", height: "7px", borderRadius: "50%", background: "#6E7BFF", display: "flex" }} />
         </div>
 
-        {/* URL bottom right */}
-        <div style={{
-          position: "absolute", bottom: "48px", right: "80px",
-          fontSize: "22px", color: "#374151", fontWeight: 500,
-          display: "flex",
-        }}>
-          mysolai.vercel.app
-        </div>
+        {/* ── RIGHT: Text content ── */}
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, paddingLeft: "60px" }}>
 
-        {/* Bottom border */}
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0, height: "3px",
-          background: "linear-gradient(90deg,#9945FF,#6E7BFF,#14F195)",
-          display: "flex",
-        }} />
+          {/* Badge */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: "8px",
+            marginBottom: "20px",
+            background: "rgba(153,69,255,0.12)",
+            border: "1px solid rgba(153,69,255,0.35)",
+            borderRadius: "99px", padding: "6px 18px",
+            width: "fit-content",
+          }}>
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#14F195", display: "flex" }} />
+            <span style={{ color: "#a78bfa", fontSize: "16px", fontWeight: 700, letterSpacing: "1px" }}>AI FOR SOLANA · $SMAI</span>
+          </div>
+
+          {/* Title */}
+          <div style={{ display: "flex", fontSize: "86px", fontWeight: 900, letterSpacing: "-3px", lineHeight: 1, marginBottom: "12px" }}>
+            <span style={{ color: "#ffffff" }}>Sol</span>
+            <span style={{ color: "#14F195" }}>AI</span>
+          </div>
+
+          {/* Tagline */}
+          <div style={{ fontSize: "24px", color: "#6b7280", fontWeight: 400, marginBottom: "40px", display: "flex" }}>
+            AI built for Solana degens
+          </div>
+
+          {/* Feature pills — 2x2 grid */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+            {[
+              { label: "🚨 Rug Detector",  bg: "rgba(248,113,113,0.12)", border: "rgba(248,113,113,0.35)", color: "#f87171" },
+              { label: "💎 Gem Finder",    bg: "rgba(20,241,149,0.12)",  border: "rgba(20,241,149,0.35)",  color: "#14F195" },
+              { label: "🐦 KOL Scorer",    bg: "rgba(56,189,248,0.12)",  border: "rgba(56,189,248,0.35)",  color: "#38bdf8" },
+              { label: "🎮 Degen Arena",   bg: "rgba(153,69,255,0.12)",  border: "rgba(153,69,255,0.35)",  color: "#a78bfa" },
+            ].map(p => (
+              <div key={p.label} style={{
+                padding: "10px 20px", borderRadius: "99px",
+                background: p.bg, border: `1.5px solid ${p.border}`,
+                color: p.color, fontSize: "17px", fontWeight: 700,
+                display: "flex",
+              }}>
+                {p.label}
+              </div>
+            ))}
+          </div>
+
+          {/* URL */}
+          <div style={{ marginTop: "32px", fontSize: "20px", color: "#374151", fontWeight: 500, display: "flex" }}>
+            mysolai.vercel.app
+          </div>
+        </div>
       </div>
     ),
     { ...size }

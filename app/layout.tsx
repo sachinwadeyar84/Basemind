@@ -12,11 +12,13 @@ export const metadata: Metadata = {
     description: "Rug detection, KOL scoring, gem finder + degen price prediction game. AI built for Solana. Free.",
     type: "website",
     siteName: "SolAI",
+    images: [{ url: "https://mysolai.vercel.app/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "SolAI — AI for Solana Crypto",
     description: "Rug detection, KOL scoring, gem finder + degen price prediction game. AI built for Solana. Free.",
+    images: ["https://mysolai.vercel.app/opengraph-image"],
   },
 };
 
