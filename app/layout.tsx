@@ -6,11 +6,17 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "SolAI — AI for Solana Crypto",
-  description: "The smartest AI assistant on Solana. Real-time prices, DeFi data, trending tokens, and more. Powered by $BMIND.",
+  description: "Rug detection, KOL scoring, gem finder, price prediction game — AI built for Solana degens. Free to use.",
   openGraph: {
     title: "SolAI — AI for Solana Crypto",
-    description: "Real-time crypto AI powered by $BMIND on Solana.",
-    images: ["/logo.png"],
+    description: "Rug detection, KOL scoring, gem finder + degen price prediction game. AI built for Solana. Free.",
+    type: "website",
+    siteName: "SolAI",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SolAI — AI for Solana Crypto",
+    description: "Rug detection, KOL scoring, gem finder + degen price prediction game. AI built for Solana. Free.",
   },
 };
 

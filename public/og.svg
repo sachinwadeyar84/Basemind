@@ -1,0 +1,86 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#050509"/>
+      <stop offset="100%" stop-color="#0a0515"/>
+    </linearGradient>
+    <linearGradient id="grad1" x1="0" y1="0" x2="400" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#9945FF"/>
+      <stop offset="50%" stop-color="#6E7BFF"/>
+      <stop offset="100%" stop-color="#14F195"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#9945FF" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#14F195" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#9945FF" stop-opacity="0.15"/>
+    </linearGradient>
+    <radialGradient id="purpleglow" cx="30%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9945FF" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#9945FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="greenglow" cx="80%" cy="60%" r="40%">
+      <stop offset="0%" stop-color="#14F195" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#14F195" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#purpleglow)"/>
+  <rect width="1200" height="630" fill="url(#greenglow)"/>
+
+  <!-- Top border line -->
+  <rect width="1200" height="2" fill="url(#grad1)" opacity="0.6"/>
+
+  <!-- Grid lines (subtle) -->
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="400" y1="0" x2="400" y2="630" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="800" y1="0" x2="800" y2="630" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+
+  <!-- Logo icon (left side) -->
+  <g transform="translate(100, 215)">
+    <!-- Background rounded rect -->
+    <rect width="200" height="200" rx="44" fill="#0D0B21"/>
+    <!-- Outer ring -->
+    <circle cx="100" cy="100" r="85" stroke="url(#grad1)" stroke-width="3" fill="none" stroke-dasharray="280 100" opacity="0.5"/>
+    <!-- S circuit path -->
+    <path d="M 130,65 C 130,65 120,55 100,55 C 75,55 65,70 65,85 C 65,100 80,105 100,110 C 120,115 135,120 135,135 C 135,150 120,145 100,145 C 80,145 70,135 70,135"
+      stroke="url(#grad1)" stroke-width="14" stroke-linecap="round" fill="none"/>
+    <!-- Dots -->
+    <circle cx="130" cy="65" r="9" fill="#9945FF"/>
+    <circle cx="70" cy="135" r="9" fill="#14F195"/>
+    <circle cx="100" cy="110" r="6" fill="#6E7BFF"/>
+  </g>
+
+  <!-- SolAI text -->
+  <text x="340" y="300" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="96" fill="#ffffff" letter-spacing="-4">SolAI</text>
+
+  <!-- Tagline -->
+  <text x="340" y="358" font-family="Inter, Arial, sans-serif" font-weight="400" font-size="28" fill="#6b7280">AI built for Solana degens</text>
+
+  <!-- Feature pills -->
+  <g transform="translate(340, 400)">
+    <!-- Pill 1 -->
+    <rect x="0" y="0" width="160" height="40" rx="20" fill="#9945FF22" stroke="#9945FF55" stroke-width="1"/>
+    <text x="80" y="26" font-family="Inter, Arial, sans-serif" font-size="15" fill="#a78bfa" text-anchor="middle" font-weight="600">🚨 Rug Detector</text>
+
+    <!-- Pill 2 -->
+    <rect x="172" y="0" width="150" height="40" rx="20" fill="#14F19522" stroke="#14F19555" stroke-width="1"/>
+    <text x="247" y="26" font-family="Inter, Arial, sans-serif" font-size="15" fill="#14F195" text-anchor="middle" font-weight="600">💎 Gem Finder</text>
+
+    <!-- Pill 3 -->
+    <rect x="334" y="0" width="170" height="40" rx="20" fill="#38bdf822" stroke="#38bdf855" stroke-width="1"/>
+    <text x="419" y="26" font-family="Inter, Arial, sans-serif" font-size="15" fill="#38bdf8" text-anchor="middle" font-weight="600">🐦 KOL Scorer</text>
+
+    <!-- Pill 4 -->
+    <rect x="516" y="0" width="180" height="40" rx="20" fill="#fbbf2422" stroke="#fbbf2455" stroke-width="1"/>
+    <text x="606" y="26" font-family="Inter, Arial, sans-serif" font-size="15" fill="#fbbf24" text-anchor="middle" font-weight="600">🎮 Degen Arena</text>
+  </g>
+
+  <!-- URL -->
+  <text x="340" y="570" font-family="Inter, Arial, sans-serif" font-size="22" fill="#374151" font-weight="500">mysolai.vercel.app</text>
+
+  <!-- Bottom border -->
+  <rect y="628" width="1200" height="2" fill="url(#grad1)" opacity="0.6"/>
+</svg>
